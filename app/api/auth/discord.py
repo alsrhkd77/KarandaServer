@@ -25,7 +25,7 @@ def authentication_web(code: str, request: Request):
     host_url = str(request.url).split('?')[0]
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     if not data.keys().__contains__('access_token'):
-        return {"message":host_url + ' ' + data}
+        return {"message":f"{host_url} + ' ' + {data}"}
     redirect_url = "https://discord.com"
     response = RedirectResponse(url=redirect_url)
     response.set_cookie(key="authentication", value=data['access_token'], httponly=True)
