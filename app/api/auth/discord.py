@@ -23,6 +23,7 @@ def authentication_web(code: str, request: Request):
     if code == '':
         return False
     host_url = str(request.url).split('?')[0]
+    print(request.url)
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     redirect_url = "https://discord.com"
     response = RedirectResponse(url=redirect_url)

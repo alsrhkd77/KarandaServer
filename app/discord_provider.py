@@ -18,8 +18,8 @@ def exchange_code(code: str, redirect_url: str = 'https://karanda-server-6hf3d25
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     r = requests.post('%s/oauth2/token' % source['API_ENDPOINT'], data=data, headers=headers)
+    print(r.json())
     r.raise_for_status()
-    logging.info(r.json())
     authorization = r.json()
     return {
         'access_token': authorization['access_token'],
@@ -32,7 +32,7 @@ def get_user_data(token: str):
         'Authorization': f'Bearer {token}',
     }
     r = requests.get(f'https://discord.com/api/users/@me', headers=headers)
+    print(r.json())
     r.raise_for_status()
-    logging.info(r.json())
     data = r.json()
     return data
