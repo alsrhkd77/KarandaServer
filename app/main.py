@@ -2,19 +2,24 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import app.discord_provider as discord_provider
+from app.api.auth import router as auth_router
 
 
 app = FastAPI()
 
 origins = [
-    "http://localhost",
-    "https://www.karanda.kr",
+    "http://localhost:*/*",
+    "https://www.karanda.kr/*",
+    "*"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_credentials=True,
 )
+
+app.include_router(auth_router)
 
 
 @app.get("/")
