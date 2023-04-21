@@ -18,7 +18,8 @@ def exchange_code(code: str, redirect_url: str = 'https://karanda-server-6hf3d25
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     r = requests.post('%s/oauth2/token' % source['API_ENDPOINT'], data=data, headers=headers)
-    print(r.json())
+    if r.status_code != 200:
+        return r.json()
     r.raise_for_status()
     authorization = r.json()
     return {
