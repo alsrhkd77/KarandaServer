@@ -29,7 +29,7 @@ def authentication_web(code: str, request: Request):
         return {"message": f"{data}"}
     redirect_url = "https://www.karanda.kr"
     response = RedirectResponse(url=redirect_url)
-    response.set_cookie(key="authentication", value=data['access_token'], httponly=True)
+    response.set_cookie(key="authentication", value=data['access_token'], httponly=True, samesite='none', secure=True)
     return response
 
 
