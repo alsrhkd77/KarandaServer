@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, Response
 from fastapi.responses import RedirectResponse, JSONResponse
+from starlette import status
 
 from app import discord_provider
 
@@ -25,26 +26,28 @@ def authentication_web(code: str, request: Request):
     host_url = str(request.url).split('?')[0]
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     if not data.keys().__contains__('access_token'):
-        return {"message":f"{host_url} + ' ' + {data}"}
-    redirect_url = "https://discord.com"
+        return {"message": f"{data}"}
+    redirect_url = "https://karanda.kr"
     response = RedirectResponse(url=redirect_url)
     response.set_cookie(key="authentication", value=data['access_token'], httponly=True)
     return response
 
 
-@router.post('/authorization')
+@router.get('/authorization')
 def authorization(request: Request):
     if request.headers.keys().__contains__('authentication'):
         token = request.headers.get('authentication')
     elif request.cookies.keys().__contains__('authentication'):
         token = request.cookies.get('authentication')
     else:
-        return False
+        return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
     # TODO: 디스코드에 등록된 사용자인지 확인, karanda에 등록된 사용자인이 확인(미등록인 경우 등록+)
     data = discord_provider.get_user_data(token)
-    response = JSONResponse(content={'avatar':data['avatar']})
-    response.set_cookie(key="authentication", value=token, httponly=True)
+    response = JSONResponse(content={
+        'avatar': data['avatar'],
+        'username': data['username'],
+    })
     return response
 
 
@@ -56,4 +59,4 @@ def user_profile(request: Request):
     else:
         return False
     data = discord_provider.get_user_data(token)
-    return {'avatar':data['avatar']}
+    return {'avatar': data['avatar']}
