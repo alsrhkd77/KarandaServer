@@ -7,6 +7,6 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    discord_id = Column(String, unique=True)
-    discord_username = Column(String)
-    discord_discriminator = Column(String)
+    uuid = Column(String(36), unique=True)
+    discord_id = Column(String(18), unique=True)
+

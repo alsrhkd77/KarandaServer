@@ -1,3 +1,4 @@
+import uuid
 from typing import Union, Dict, Any, Optional
 
 from sqlalchemy.orm import Session
@@ -11,11 +12,13 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_discord_id(self, db: Session, *, discord_id: str) -> Optional[User]:
         return db.query(User).filter(User.discord_id == discord_id).first()
 
+    def get_by_uuid(self, db: Session, *, user_uuid: str) -> Optional[User]:
+        return db.query(User).filter(User.uuid == user_uuid).first()
+
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
         db_obj = User(
             discord_id=obj_in.discord_id,
-            discord_username=obj_in.discord_username,
-            discord_discriminator=obj_in.discord_discriminator
+            uuid=str(uuid.uuid1())
         )
         db.add(db_obj)
         db.commit()
@@ -30,4 +33,4 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
 
-user = CRUDUser(User)
+crud_user = CRUDUser(User)

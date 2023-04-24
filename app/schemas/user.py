@@ -6,18 +6,15 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    discord_username: str
-    discord_discriminator: str
+    pass
 
 
 class UserUpdate(UserBase):
-    discord_username: str
-    discord_discriminator: str
+    discord_id: str
 
 
 class User(UserBase):
     id: int
-
 
     class Config:
         orm_mode = True
