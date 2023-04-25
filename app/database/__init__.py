@@ -6,6 +6,6 @@ app_options = {'projectId': 'karanda-384102'}
 
 if settings.env == "dev":
     cred = credentials.Certificate("./OAuth_id/karanda-384102-firebase-adminsdk-i8vxk-6a4c6730c0.json")
-    default_app = firebase_admin.initialize_app(options=app_options)
 else:
-    default_app = firebase_admin.initialize_app(options=app_options)
+    cred = credentials.ApplicationDefault()
+default_app = firebase_admin.initialize_app(options=app_options, credential=cred)
