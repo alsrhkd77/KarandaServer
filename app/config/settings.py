@@ -6,8 +6,8 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    web_front_url: str = "http://localhost"
-    env: str = "dev"
+    web_front_url: str = "https://www.karanda.kr"
+    env: str = "deploy"
 
 
 settings = Settings()
