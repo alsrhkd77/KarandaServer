@@ -1,7 +1,5 @@
 OAuth_id/
 
-settings.env
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -131,4 +129,3 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-settings.env

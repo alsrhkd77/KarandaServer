@@ -9,4 +9,4 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    uuid: str
+    discord_id: str

@@ -12,13 +12,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_discord_id(self, db: Session, *, discord_id: str) -> Optional[User]:
         return db.query(User).filter(User.discord_id == discord_id).first()
 
-    def get_by_uuid(self, db: Session, *, user_uuid: str) -> Optional[User]:
-        return db.query(User).filter(User.uuid == user_uuid).first()
-
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
         db_obj = User(
             discord_id=obj_in.discord_id,
-            uuid=str(uuid.uuid1())
         )
         db.add(db_obj)
         db.commit()

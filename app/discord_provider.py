@@ -37,5 +37,14 @@ class DiscordProvider:
         data = r.json()
         return data
 
+    def get_user_data_with_id(self, discord_id: str):
+        headers = {
+            'Authorization': f'Bot {self.source["TOKEN"]}',
+        }
+        r = requests.get(f'https://discord.com/api/users/{discord_id}', headers=headers)
+        r.raise_for_status()
+        data = r.json()
+        return data
+
 
 discord_provider = DiscordProvider()
