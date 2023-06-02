@@ -10,7 +10,7 @@ class ChecklistItem(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(38))
     enabled = Column(Boolean)
-    cycle = Column(String(7))
+    cycle = Column(String(15))
     owner_id = Column(Integer, ForeignKey("users.id"))
 
     owner = relationship("User", back_populates="checklist_items")

@@ -42,7 +42,7 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
     url = f"{settings.web_front_url}/#/auth/authenticate"
     redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     response = RedirectResponse(url=redirect_url)
-    response.set_cookie(key="authorization", value=token, samesite="none", domain="karanda.kr", httponly=True)
+    response.set_cookie(key="authorization", value=token, samesite="none", domain=".karanda.kr", httponly=True)
     return response
 
 
