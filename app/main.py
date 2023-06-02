@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import declarative_base
+
 from app.api.auth import router as auth_router
+from app.api.checklist import router as checklist_router
 from app.database.base_class import Base
-from app.database.session import engine
+from app.database.session import engine, SessionLocal
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -24,8 +27,20 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(checklist_router)
 
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+
+@app.middleware("http")
+async def db_session_middleware(request: Request, call_next):
+    response = Response("Internal server error", status_code=500)
+    try:
+        request.state.db = SessionLocal()
+        response = await call_next(request)
+    finally:
+        request.state.db.close()
+    return response

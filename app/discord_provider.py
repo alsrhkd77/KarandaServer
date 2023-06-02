@@ -12,7 +12,8 @@ class DiscordProvider:
             'client_secret': self.source['CLIENT_SECRET'],
             'grant_type': 'authorization_code',
             'code': code,
-            'scope': 'identify email',
+            # 'scope': 'identify email',
+            'scope': 'identify',
             'redirect_uri': redirect_url
         }
         headers = {
@@ -22,10 +23,30 @@ class DiscordProvider:
         if r.status_code != 200:
             return r.json()
         r.raise_for_status()
-        authorization = r.json()
+        body = r.json()
         return {
-            'access_token': authorization['access_token'],
-            'refresh_token': authorization['refresh_token']
+            'access_token': body['access_token'],
+            'refresh_token': body['refresh_token']
+        }
+
+    def refresh_token(self, token):
+        data = {
+            'client_id': self.source['CLIENT_ID'],
+            'client_secret': self.source['CLIENT_SECRET'],
+            'grant_type': 'refresh_token',
+            'refresh_token': token,
+        }
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        r = requests.post('%s/oauth2/token' % self.source['API_ENDPOINT'], data=data, headers=headers)
+        if r.status_code != 200:
+            return r.json()
+        r.raise_for_status()
+        body = r.json()
+        return {
+            'access_token': body['access_token'],
+            'refresh_token': body['refresh_token']
         }
 
     def get_user_data(self, token: str):

@@ -1,5 +1,7 @@
-from typing import Generator
-from fastapi import Request, HTTPException
+from datetime import datetime
+from typing import Generator, Optional
+from fastapi import Request, HTTPException, responses
+from starlette import status
 
 from app.database.session import SessionLocal
 from app.utils.token_factory import validate_access_token
@@ -13,15 +15,20 @@ def get_db() -> Generator:
         db.close()
 
 
-def get_discord_id_from_token(request: Request):
-    if request.headers.keys().__contains__('authentication'):
-        token = request.headers.get('authentication')
-    elif request.cookies.keys().__contains__('authentication'):
-        token = request.cookies.get('authentication')
+def get_uuid_from_token(request: Request) -> Optional[str]:
+    if request.headers.keys().__contains__('authorization'):
+        token = request.headers.get('authorization')
+    elif request.cookies.keys().__contains__('authorization'):
+        token = request.cookies.get('authorization')
         raise HTTPException(status_code=400, detail="Cookie has token!")
     else:
         raise HTTPException(status_code=400, detail="X-Token header invalid")
-    return validate_access_token(token=token)
+    payload = validate_access_token(token=token)
+    if payload.expire < datetime.utcnow():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)   # need refresh
+    request.state.user_uuid = payload.user_uuid
+    request.state.expire = payload.expire
+    return payload.user_uuid
 
 
 def get_host_url(request: Request):

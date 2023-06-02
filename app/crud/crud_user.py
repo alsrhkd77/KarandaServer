@@ -5,16 +5,20 @@ from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.schemas.user import DiscordUserCreate, UserUpdate
 
 
-class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
+class CRUDUser(CRUDBase[User, DiscordUserCreate, UserUpdate]):
     def get_by_discord_id(self, db: Session, *, discord_id: str) -> Optional[User]:
         return db.query(User).filter(User.discord_id == discord_id).first()
 
-    def create(self, db: Session, *, obj_in: UserCreate) -> User:
+    def get_by_user_uuid(self, db: Session, *, user_uuid: str) -> Optional[User]:
+        return db.query(User).filter(User.user_uuid == user_uuid).one_or_none()
+
+    def create(self, db: Session, *, obj_in: DiscordUserCreate) -> User:
         db_obj = User(
             discord_id=obj_in.discord_id,
+            user_uuid=str(uuid.uuid1())
         )
         db.add(db_obj)
         db.commit()

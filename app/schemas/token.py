@@ -1,4 +1,4 @@
-from typing import Optional
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -9,4 +9,5 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    discord_id: str
+    user_uuid: str
+    expire: datetime

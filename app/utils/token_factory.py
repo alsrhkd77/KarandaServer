@@ -21,9 +21,9 @@ REFRESH_TOKEN_EXPIRE_MINUTES = properties["REFRESH_EXPIRE"]
 datetime_format = "%Y.%m.%d %H:%M:%S"
 
 
-def create_access_token(discord_id: str, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
+def create_access_token(user_uuid: str, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
     expire = datetime.utcnow() + expires_delta
-    to_encode = {"expire": expire.strftime(datetime_format), "discord_id": discord_id}
+    to_encode = {"expire": expire.strftime(datetime_format), "open_id": user_uuid}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -36,9 +36,9 @@ def validate_access_token(token: Annotated[str, Depends(oauth2_scheme)]):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        discord_id: str = payload.get("discord_id")
+        user_uuid: str = payload.get("open_id")
         expire = datetime.strptime(payload.get("expire"), datetime_format)
-        token_payload = TokenPayload(discord_id=discord_id)
+        token_payload = TokenPayload(user_uuid=user_uuid, expire=expire)
     except JWTError:
         raise credentials_exception
-    return token_payload.discord_id
+    return token_payload
