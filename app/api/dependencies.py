@@ -21,7 +21,7 @@ def get_uuid_from_token(request: Request) -> Optional[str]:
     elif request.headers.keys().__contains__('authorization'):
         token = request.headers.get('authorization')
     else:
-        raise HTTPException(status_code=400, detail="X-Token header invalid")
+        raise HTTPException(status_code=400, detail=f"X-Token header invalid\n{request.cookies.keys()}")
     payload = validate_access_token(token=token)
     if payload.expire < datetime.utcnow():
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)   # need refresh
