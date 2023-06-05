@@ -38,6 +38,7 @@ def authentication_windows(code: str, request: Request, host_url: str = Depends(
 @router.get('/authenticate/web')
 def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url)):
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
+    print(data)
     token = authenticate(access_token=data['access_token'], db=request.state.db)
     url = f"{settings.web_front_url}/#/auth/authenticate"
     redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
@@ -86,6 +87,6 @@ def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
     if user_uuid != '':
         user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
         if user is not None:
-            result = crud_user.remove(db=request.state.db, id=user.id)
+            crud_user.remove(db=request.state.db, id=user.id)
             return Response(status_code=200)
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)
