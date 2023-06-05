@@ -16,12 +16,13 @@ def get_db() -> Generator:
 
 
 def get_uuid_from_token(request: Request) -> Optional[str]:
-    if request.cookies.keys().__contains__('_karanda'):
-        token = request.cookies.get('_karanda')
+    if request.cookies.keys().__contains__('karanda'):
+        token = request.cookies.get('karanda')
     elif request.headers.keys().__contains__('authorization'):
         token = request.headers.get('authorization')
     else:
         raise HTTPException(status_code=400, detail="X-Token header invalid")
+    print(token)
     payload = validate_access_token(token=token)
     if payload.expire < datetime.utcnow():
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)   # need refresh

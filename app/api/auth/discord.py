@@ -42,7 +42,7 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
     url = f"{settings.web_front_url}/#/auth/authenticate"
     redirect_url = f"{url}?social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     response = RedirectResponse(url=redirect_url)
-    response.set_cookie(key="_karanda", value=token, domain="karanda.kr", httponly=True)
+    response.set_cookie(key="karanda", value=token, domain="karanda.kr", httponly=True)
     return response
 
 
@@ -65,8 +65,8 @@ def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token
 
 @router.post('/refresh')
 def refresh_access_token(request: Request):
-    if request.cookies.keys().__contains__('_karanda'):
-        access_token = request.cookies.get('_karanda')
+    if request.cookies.keys().__contains__('karanda'):
+        access_token = request.cookies.get('karanda')
     elif request.headers.keys().__contains__('authorization'):
         access_token = request.headers.get('authorization')
     else:
@@ -88,7 +88,7 @@ def refresh_access_token(request: Request):
             response = JSONResponse(content=json_data)
         else:
             response = JSONResponse(content=json_data)
-            response.set_cookie(key="_karanda", value=token, domain="karanda.kr", httponly=True)
+            response.set_cookie(key="karanda", value=token, domain="karanda.kr", httponly=True)
         return response
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 
@@ -97,7 +97,7 @@ def refresh_access_token(request: Request):
 def logout(user_uuid: str = Depends(get_uuid_from_token)):
     # if you need more process, add here
     response = Response(status_code=status.HTTP_200_OK)
-    response.delete_cookie(key="_karanda")
+    response.delete_cookie(key="karanda")
     return response
 
 
