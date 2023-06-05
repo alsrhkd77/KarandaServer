@@ -1,12 +1,10 @@
-from fastapi import FastAPI, Request, Response, Depends
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.checklist import router as checklist_router
 from app.database.base_class import Base
 from app.database.session import engine, SessionLocal
-
-from app.api.dependencies import get_uuid_from_token
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()

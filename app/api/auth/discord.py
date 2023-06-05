@@ -40,9 +40,9 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token = authenticate(access_token=data['access_token'], db=request.state.db)
     url = f"{settings.web_front_url}/#/auth/authenticate"
-    redirect_url = f"{url}?social-token={data['access_token']}&refresh-token={data['refresh_token']}"
+    redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     response = RedirectResponse(url=redirect_url)
-    response.set_cookie(key='karanda', value=token, domain="karanda.kr", httponly=True)
+    # response.set_cookie(key='karanda', value=token, domain="karanda.kr", httponly=True)
     return response
 
 
@@ -65,40 +65,20 @@ def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token
 
 @router.post('/refresh')
 def refresh_access_token(request: Request):
-    if request.cookies.keys().__contains__('karanda'):
-        access_token = request.cookies.get('karanda')
-    elif request.headers.keys().__contains__('authorization'):
-        access_token = request.headers.get('authorization')
-    else:
-        raise HTTPException(status_code=400, detail="X-Token header invalid")
     data = discord_provider.refresh_token(request.headers['refresh-token'])
     discord_user = discord_provider.get_user_data(data['access_token'])
-    user_uuid = validate_access_token(token=access_token).user_uuid
+    user_uuid = validate_access_token(token=request.headers['authorization']).user_uuid
     user = crud_user.get_by_user_uuid(db=request.state.db, user_uuid=user_uuid)
     if discord_user['id'] == user.discord_id:
         token = create_access_token(user_uuid=user.user_uuid)
-        json_data = {
+        return JSONResponse(content={
+            'token': token,
             'social-token': data['access_token'],
             'refresh-token': data['refresh_token'],
             'avatar': f"{discord_user['id']}/{discord_user['avatar']}.png",
             'username': discord_user['username'],
-        }
-        if request.client.host.__contains__("karanda.kr"):
-            json_data['token'] = token
-            response = JSONResponse(content=json_data)
-        else:
-            response = JSONResponse(content=json_data)
-            response.set_cookie(key="karanda", value=token, domain="karanda.kr", httponly=True)
-        return response
+        })
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)
-
-
-@router.post('/logout')
-def logout(user_uuid: str = Depends(get_uuid_from_token)):
-    # if you need more process, add here
-    response = Response(status_code=status.HTTP_200_OK)
-    response.delete_cookie(key="karanda")
-    return response
 
 
 @router.delete('/unregister')
