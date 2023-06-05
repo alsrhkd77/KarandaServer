@@ -17,7 +17,7 @@ def get_db() -> Generator:
 
 def get_uuid_from_token(request: Request) -> Optional[str]:
     if request.cookies.keys().__contains__('karanda'):
-        token = request.cookies.get('karanada')
+        token = request.cookies.get('karanda')
         raise HTTPException(status_code=400, detail="Cookie has token")
     if request.cookies.keys().__contains__('calpheon'):
         token = request.cookies.get('calpheon')
