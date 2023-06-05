@@ -36,18 +36,6 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/get-cookie")
-def get_cookie():
-    response = Response(status_code=200)
-    response.set_cookie(key="karanda", value="asdf")
-    return response
-
-
-@app.get("/test-cookies")
-def test_cookies(request: Request, item = Depends(get_uuid_from_token)):
-    return request.cookies.keys()
-
-
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
     response = Response("Internal server error", status_code=500)
