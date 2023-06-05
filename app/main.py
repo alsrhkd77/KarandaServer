@@ -43,7 +43,7 @@ def get_cookie():
     return response
 
 
-@app.get("test-cookies")
+@app.get("/test-cookies")
 def test_cookies(request: Request, item = Depends(get_uuid_from_token)):
     return request.cookies.keys()
 
