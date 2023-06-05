@@ -14,11 +14,17 @@ class CRUDChecklistItem(CRUDBase[ChecklistItem, ChecklistItemCreate, ChecklistIt
     def get_all_by_user_uuid(self, db: Session, *, user_uuid: int):
         return db.query(ChecklistItem).join(User).filter_by(user_uuid=user_uuid).all()
 
+    def get_by_title_and_user_uuid(self, db: Session, *, title: String, user_uuid: int) -> Optional[ChecklistItem]:
+        return db.query(ChecklistItem).filter_by(title=title).join(User).filter_by(user_uuid=user_uuid).one_or_none()
+
     def get_by_title_and_owner_id(self, db: Session, *, title: String, owner_id: int) -> Optional[ChecklistItem]:
         return db.query(ChecklistItem).filter_by(title=title, owner_id=owner_id).one_or_none()
 
     def get_by_id_and_owner_id(self, db:Session, *, id: int, owner_id: int) -> Optional[ChecklistItem]:
-        return db.query(ChecklistItem).filter_by(id=id, owner_id=owner_id).first()
+        return db.query(ChecklistItem).filter_by(id=id, owner_id=owner_id).one_or_none()
+
+    def get_by_id_and_user_uuid(self, db:Session, *, id:int, user_uuid:int) -> Optional[ChecklistItem]:
+        return db.query(ChecklistItem).filter_by(id=id).join(User).filter_by(user_uuid=user_uuid).one_or_none()
 
     def create(self, db: Session, *, item: ChecklistItemCreate, owner_id: int) -> Optional[ChecklistItem]:
         if self.get_by_title_and_owner_id(db=db, title=item.title, owner_id=owner_id) is not None:
@@ -45,7 +51,7 @@ class CRUDChecklistItem(CRUDBase[ChecklistItem, ChecklistItemCreate, ChecklistIt
         return db_obj
 
     def delete(self, db: Session, *, item_id: int, owner_id: int):
-        db_item = db.query(ChecklistItem).filter_by(id=item_id, owner_id=owner_id).first()
+        db_item = db.query(ChecklistItem).filter_by(id=item_id, owner_id=owner_id).one_or_none()
         if db_item is None:
             return False
         db.delete(db_item)

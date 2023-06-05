@@ -21,9 +21,9 @@ class CRUDChecklistFinishedItem(
         return db.query(ChecklistFinishedItem).join(ChecklistItem).join(User).filter_by(
             user_uuid=user_uuid).all()
 
-    def delete(self, db: Session, *, owner_id: int, checklist_item: int, finished_item: int) -> object:
+    def delete(self, db: Session, *, user_uuid: int, checklist_item: int, finished_item: int) -> object:
         item = db.query(ChecklistFinishedItem).filter_by(id=finished_item).join(ChecklistItem).filter_by(
-            id=checklist_item).join(User).filter_by(id=owner_id).first()
+            id=checklist_item).join(User).filter_by(user_uuid=user_uuid).first()
         if item is None:
             return False
         db.delete(item)
