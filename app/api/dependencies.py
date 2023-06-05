@@ -16,11 +16,11 @@ def get_db() -> Generator:
 
 
 def get_uuid_from_token(request: Request) -> Optional[str]:
-    if request.headers.keys().__contains__('authorization'):
-        token = request.headers.get('authorization')
-    elif request.cookies.keys().__contains__('calpheon'):
+    if request.cookies.keys().__contains__('calpheon'):
         token = request.cookies.get('calpheon')
-        raise HTTPException(status_code=400, detail="Cookie has token!")
+        raise HTTPException(status_code=400, detail="Cookie has token")
+    elif request.headers.keys().__contains__('authorization'):
+        token = request.headers.get('authorization')
     else:
         raise HTTPException(status_code=400, detail="X-Token header invalid")
     payload = validate_access_token(token=token)
