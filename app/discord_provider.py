@@ -34,6 +34,7 @@ class DiscordProvider:
             'client_id': self.source['CLIENT_ID'],
             'client_secret': self.source['CLIENT_SECRET'],
             'grant_type': 'refresh_token',
+            'scope': 'identify',
             'refresh_token': token,
         }
         headers = {

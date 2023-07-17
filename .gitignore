@@ -1,6 +1,7 @@
 OAuth_id/
 
 karanda_dev.db
+.idea/dataSources.xml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
