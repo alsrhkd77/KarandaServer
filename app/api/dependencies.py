@@ -5,6 +5,7 @@ from starlette import status
 
 from app.database.session import SessionLocal
 from app.utils.token_factory import validate_access_token
+from app.utils.http_exceptions import token_expired_exception
 
 
 def get_db() -> Generator:
@@ -22,7 +23,7 @@ def get_uuid_from_token(request: Request) -> Optional[str]:
         raise HTTPException(status_code=400, detail=f"X-Token header invalid")
     payload = validate_access_token(token=token)
     if payload.expire < datetime.utcnow():
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)   # need refresh
+        raise token_expired_exception   # need refresh
     request.state.user_uuid = payload.user_uuid
     request.state.expire = payload.expire
     return payload.user_uuid

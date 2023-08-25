@@ -5,6 +5,9 @@ from app.database.firestore_provider import firestore_provider
 class DiscordProvider:
     def __init__(self):
         self.source = firestore_provider.get_discord_data()
+        self.headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
 
     def exchange_code(self, code: str, redirect_url: str):
         data = {
@@ -16,10 +19,7 @@ class DiscordProvider:
             'scope': 'identify',
             'redirect_uri': redirect_url
         }
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-        r = requests.post('%s/oauth2/token' % self.source['API_ENDPOINT'], data=data, headers=headers)
+        r = requests.post('%s/oauth2/token' % self.source['API_ENDPOINT'], data=data, headers=self.headers)
         if r.status_code != 200:
             return r.json()
         r.raise_for_status()
@@ -29,6 +29,7 @@ class DiscordProvider:
             'refresh_token': body['refresh_token']
         }
 
+    '''
     def refresh_token(self, token):
         data = {
             'client_id': self.source['CLIENT_ID'],
@@ -40,7 +41,7 @@ class DiscordProvider:
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        r = requests.post('%s/oauth2/token' % self.source['API_ENDPOINT'], data=data, headers=headers)
+        r = requests.post('%s/oauth2/token' % self.source['API_ENDPOINT'], data=data, headers=self.headers)
         if r.status_code != 200:
             return r.json()
         r.raise_for_status()
@@ -49,7 +50,7 @@ class DiscordProvider:
             'access_token': body['access_token'],
             'refresh_token': body['refresh_token']
         }
-
+    '''
     def get_user_data(self, token: str):
         headers = {
             'Authorization': f'Bearer {token}',
