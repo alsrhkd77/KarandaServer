@@ -42,7 +42,7 @@ def authentication_windows(code: str, request: Request, host_url: str = Depends(
 def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url)):
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token, refresh_token = authenticate(access_token=data['access_token'], db=request.state.db)
-    url = f"{settings.web_front_url}/#/auth/authenticate"
+    url = f"{settings.web_front_url}/auth/authenticate"
     # redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     response = RedirectResponse(url=redirect_url)
