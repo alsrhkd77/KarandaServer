@@ -9,8 +9,9 @@ from app.config.settings import settings
 from app.discord_provider import discord_provider
 from app.api.dependencies import get_db, get_uuid_from_token, get_host_url
 from app.crud.crud_user import crud_user
-from app.schemas.user import DiscordUserCreate
-from app.utils.token_factory import create_access_token, validate_access_token, create_refresh_token, validate_refresh_token
+from app.schemas.user import DiscordUserCreate, UserUpdate
+from app.utils.token_factory import create_access_token, validate_access_token, create_refresh_token, \
+    validate_refresh_token
 from app.utils.http_exceptions import token_expired_exception
 
 router = APIRouter(
@@ -46,23 +47,27 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
     # redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     response = RedirectResponse(url=redirect_url)
-    # response.set_cookie(key='karanda', value=token, domain="karanda.kr", httponly=True)
+    response.set_cookie(key='karanda', value="token", domain="karanda.kr", httponly=True)  # test
     return response
 
 
 @router.get('/authorization')
 def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
     if request.state.expire < datetime.utcnow() - timedelta(days=1):
-        raise token_expired_exception   # need refresh
+        raise token_expired_exception  # need refresh
     if user_uuid != '':
         user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
         if user is not None:
             data = discord_provider.get_user_data_with_id(user.discord_id)
             if data['id'] == user.discord_id:
+                if user.user_name is None or data['username'] != user.user_name:
+                    crud_user.update(request.state.db, db_obj=user, obj_in={"user_name": data['username']})
                 response = JSONResponse(content={
                     'avatar': f"{data['id']}/{data['avatar']}.png",
                     'username': data['username'],
+                    'discord_id': data['id'],
                 })
+                response.set_cookie(key='karanda', value="token", domain="karanda.kr", httponly=True)  # test
                 return response
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -84,6 +89,7 @@ def refresh_access_token(request: Request):
             'refresh-token': refresh_token,
             'avatar': f"{data['id']}/{data['avatar']}.png",
             'username': data['username'],
+            'discord_id': data['id'],
         })
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)
 

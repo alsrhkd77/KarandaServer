@@ -9,6 +9,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_uuid = Column(String(36), unique=True)
-    discord_id = Column(String(18), unique=True)
+    discord_id = Column(String(36), unique=True)
+    user_name = Column(String(36))
 
     checklist_items = relationship("ChecklistItem", back_populates="owner", cascade="all, delete")
+    blacklist_users = relationship("BlacklistUser", back_populates="owner", cascade="all, delete")

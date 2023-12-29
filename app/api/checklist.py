@@ -50,7 +50,8 @@ def create_finished_item(data: dict, request: Request):
     checklist_item = data['checklist_item']
     user_uuid = request.state.user_uuid
     db = request.state.db
-    checklist_item_data = crud_checklist_cycle_item.get_by_title_and_user_uuid(db=db, title=checklist_item, user_uuid=user_uuid)
+    checklist_item_data = crud_checklist_cycle_item.get_by_title_and_user_uuid(db=db, title=checklist_item,
+                                                                               user_uuid=user_uuid)
     finished_item = crud_checklist_finished_item.create(db=db, item=item, checklist_item=checklist_item_data.id)
     return finished_item
 
@@ -68,7 +69,7 @@ def delete_checklist_item(data: dict, request: Request):
     item_id = int(data['item_id'])
     user_uuid = request.state.user_uuid
     db = request.state.db
-    owner = crud_user.user_uuid(db=db, user_uuid=user_uuid)
+    owner = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
     return crud_checklist_cycle_item.delete(db=db, item_id=item_id, owner_id=owner.id)
 
 
