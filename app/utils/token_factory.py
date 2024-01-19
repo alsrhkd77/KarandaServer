@@ -23,14 +23,14 @@ datetime_format = "%Y.%m.%d %H:%M:%S"
 
 
 def create_access_token(user_uuid: str, expires_delta: timedelta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
-    expire = datetime.now(timezone.utc) + expires_delta
+    expire = datetime.utcnow() + expires_delta
     to_encode = {"expire": expire.strftime(datetime_format), "open_id": user_uuid}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
 def create_refresh_token(user_uuid: str, expires_delta: timedelta = timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)):
-    expire = datetime.now(timezone.utc) + expires_delta
+    expire = datetime.utcnow() + expires_delta
     to_encode = {"expire": expire.strftime(datetime_format), "open_id": user_uuid}
     encoded_jwt = jwt.encode(to_encode, REFRESH_KEY, algorithm=ALGORITHM)
     return encoded_jwt

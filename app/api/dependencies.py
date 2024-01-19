@@ -21,7 +21,7 @@ def get_uuid_from_token(request: Request) -> Optional[str]:
     else:
         raise HTTPException(status_code=401, detail=f"X-Token header invalid")
     payload = validate_access_token(token=token)
-    if payload.expire < datetime.now(timezone.utc):
+    if payload.expire < datetime.utcnow():
         raise token_expired_exception  # need refresh
     request.state.user_uuid = payload.user_uuid
     request.state.expire = payload.expire
