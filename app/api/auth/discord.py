@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request, Response, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -53,7 +53,7 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
 
 @router.get('/authorization')
 def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
-    if request.state.expire < datetime.utcnow() - timedelta(days=1):
+    if request.state.expire < datetime.now(timezone.utc) - timedelta(days=1):
         raise token_expired_exception  # need refresh
     if user_uuid != '':
         user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
@@ -77,7 +77,7 @@ def refresh_access_token(request: Request):
     token = validate_access_token(token=request.headers['authorization'])
     refresh_token = validate_refresh_token(token=request.headers['refresh-token'])
 
-    if refresh_token.expire < datetime.now(UTC):
+    if refresh_token.expire < datetime.now(timezone.utc):
         raise token_expired_exception
     user = crud_user.get_by_user_uuid(db=request.state.db, user_uuid=refresh_token.user_uuid)
     if token.user_uuid == refresh_token.user_uuid == user.user_uuid:
