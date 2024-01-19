@@ -1,15 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
-from fastapi import APIRouter, Request, Response, Depends, HTTPException
+from fastapi import APIRouter, Request, Response, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
 from requests import Session
 from starlette import status
 
 from app.config.settings import settings
 from app.discord_provider import discord_provider
-from app.api.dependencies import get_db, get_uuid_from_token, get_host_url
+from app.api.dependencies import get_uuid_from_token, get_host_url
 from app.crud.crud_user import crud_user
-from app.schemas.user import DiscordUserCreate, UserUpdate
+from app.schemas.user import DiscordUserCreate
 from app.utils.token_factory import create_access_token, validate_access_token, create_refresh_token, \
     validate_refresh_token
 from app.utils.http_exceptions import token_expired_exception
@@ -77,7 +77,7 @@ def refresh_access_token(request: Request):
     token = validate_access_token(token=request.headers['authorization'])
     refresh_token = validate_refresh_token(token=request.headers['refresh-token'])
 
-    if refresh_token.expire < datetime.utcnow():
+    if refresh_token.expire < datetime.now(UTC):
         raise token_expired_exception
     user = crud_user.get_by_user_uuid(db=request.state.db, user_uuid=refresh_token.user_uuid)
     if token.user_uuid == refresh_token.user_uuid == user.user_uuid:
