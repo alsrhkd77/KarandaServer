@@ -8,7 +8,7 @@ class MarettaStatusReport(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     reporter_id = Column(Integer, ForeignKey("users.id"))
-    reporter_discord_id = Column(String(18))
+    reporter_discord_id = Column(String(36))
     reporter_name = Column(String(32))
     report_at = Column(DateTime)
     channel = Column(String(12))
