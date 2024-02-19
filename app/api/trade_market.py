@@ -19,6 +19,7 @@ from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
 from app.utils.web_socket_manager import trade_market_websocket_manager
+from app.utils.trade_market_wait_list_manager import trade_market_wait_list_manager
 
 router = APIRouter(prefix='/trade-market')
 ws_router = APIRouter(prefix='/trade-market')
@@ -57,20 +58,19 @@ async def check_wait_list():
 
 @ws_router.websocket('/wait-list')
 async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(get_token_from_websocket)]):
-    global wait_item_list
-    await trade_market_websocket_manager.accept(websocket, subprotocol=token)
-    if wait_list_last_update is None or len(trade_market_websocket_manager.active_connections) == 1:
-        await check_wait_list()
+    await trade_market_wait_list_manager.accept(websocket, subprotocol=token)
+    if len(trade_market_wait_list_manager.active_connections) == 1:
+        await trade_market_wait_list_manager.check_wait_list()
     else:
-        await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
+        await trade_market_wait_list_manager.send_to_last()
     try:
         while True:
             data = await websocket.receive_text()
             if data == 'update':
-                await check_wait_list()
+                await trade_market_wait_list_manager.check_wait_list()
     except WebSocketDisconnect:
         print("disconnect")
-        trade_market_websocket_manager.disconnect(websocket)
+        trade_market_wait_list_manager.disconnect(websocket)
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse])
