@@ -2,15 +2,16 @@ import copy
 import itertools
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Union, Any
+from typing import Union, Any, Annotated
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from starlette import status
 from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from app.api.dependencies import get_token_from_websocket, get_uuid_from_token
 from app.schemas.bdo_item import BdoItem
 from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
@@ -32,7 +33,7 @@ wait_item_list = []
 
 
 # @router.get('/get/wait-list', response_model=list[MarketWaitItem])
-async def wait_list():
+def wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(minutes=1):
         wait_item_list = trade_market_provider.wait_list()
@@ -52,9 +53,9 @@ async def check_wait_list():
 
 
 @router.websocket('/wait-list')
-async def listen_wait_list(websocket: WebSocket):
+async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(get_token_from_websocket)]):
     global wait_item_list, wait_list_last_update
-    await trade_market_websocket_manager.connect(websocket)
+    await trade_market_websocket_manager.connect(websocket, subprotocol=token)
     if len(trade_market_websocket_manager.active_connections) == 1:
         await check_wait_list()
     else:
@@ -70,7 +71,7 @@ async def listen_wait_list(websocket: WebSocket):
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse])
-async def get_latest(request: Request, target_list: list[str] = Query(None)):
+def get_latest(request: Request, target_list: list[str] = Query(None), user_uuid: str = Depends(get_uuid_from_token)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -168,7 +169,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-async def detail(request: Request, item_code: int):
+def detail(request: Request, item_code: int, user_uuid: str = Depends(get_uuid_from_token)):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -245,7 +246,7 @@ async def detail(request: Request, item_code: int):
                 update_data.update(data=realtime_data[index], date=now)
                 update.append(update_data)
                 data.remove(grouped_data[date_list[0]][index])
-            #del date_list[0]
+            # del date_list[0]
 
         # Create and update to DB
         if create:
@@ -256,6 +257,7 @@ async def detail(request: Request, item_code: int):
             update = list(map(market_data_to_market_data_response, update))
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
+        data.sort(key=lambda x: x.enhancement_level)
 
     return data
 

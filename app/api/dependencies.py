@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from typing import Generator, Optional
-from fastapi import Request, HTTPException
+from typing import Generator, Optional, Annotated
+from fastapi import Request, HTTPException, Cookie, Header, WebSocketException
 from fastapi.security import APIKeyHeader
 from starlette import status
+from starlette.websockets import WebSocket
 
 from app.database.session import SessionLocal
 from app.utils.token_factory import validate_access_token
@@ -18,6 +19,7 @@ def get_db() -> Generator:
 
 
 def get_uuid_from_token(request: Request) -> Optional[str]:
+    print(request.cookies.keys())
     if 'authorization' in request.headers.keys():
         token = request.headers.get('authorization')
         token = token.replace('Bearer ', '')
@@ -32,6 +34,21 @@ def get_uuid_from_token(request: Request) -> Optional[str]:
     request.state.user_uuid = payload.user_uuid
     request.state.expire = payload.expire
     return payload.user_uuid
+
+
+async def get_token_from_websocket(
+        websocket: WebSocket,
+        session: Annotated[str | None, Cookie()] = None,
+) -> Optional[str]:
+    headers = websocket.headers
+    print(session)
+    if headers is None or 'sec-websocket-protocol' not in headers.keys():
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    token = headers.get('sec-websocket-protocol')
+    payload = validate_access_token(token=token)
+    if payload.expire < datetime.utcnow():
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    return token
 
 
 def get_host_url(request: Request):
