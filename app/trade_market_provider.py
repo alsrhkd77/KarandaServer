@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 
@@ -28,7 +28,7 @@ class TradeMarketProvider:
                         item_num = int(item[0])
                         enhancement_level = int(item[1])
                         price = int(item[2])
-                        target_time = datetime.fromtimestamp(int(item[3]))
+                        target_time = datetime.fromtimestamp(int(item[3]), tz=timezone.utc)
                         result.append(
                             MarketWaitItem(item_num=item_num, enhancement_level=enhancement_level, price=price,
                                            target_time=target_time))
