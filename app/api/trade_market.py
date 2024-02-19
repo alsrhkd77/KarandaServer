@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import itertools
 import json
@@ -59,19 +60,19 @@ async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(g
     if len(trade_market_websocket_manager.active_connections) == 1:
         await check_wait_list()
     else:
-        await trade_market_websocket_manager.send_message(json.dumps(jsonable_encoder(wait_item_list)), websocket)
+        await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
     try:
         while True:
             data = await websocket.receive_text()
             if data == 'update' and wait_list_last_update < datetime.now() - timedelta(minutes=1):
-                await check_wait_list()
+                await asyncio.create_task(check_wait_list)
     except WebSocketDisconnect:
         print("disconnect")
         trade_market_websocket_manager.disconnect(websocket)
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse])
-async def get_latest(request: Request, target_list: list[str] = Query(None), user_uuid: str = Depends(get_uuid_from_token)):
+def get_latest(request: Request, target_list: list[str] = Query(None), user_uuid: str = Depends(get_uuid_from_token)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -169,7 +170,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-async def detail(request: Request, item_code: int, user_uuid: str = Depends(get_uuid_from_token)):
+def detail(request: Request, item_code: int, user_uuid: str = Depends(get_uuid_from_token)):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
