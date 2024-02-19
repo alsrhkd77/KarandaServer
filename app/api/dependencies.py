@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import Generator, Optional
 from fastapi import Request, HTTPException
+from fastapi.security import APIKeyHeader
+from starlette import status
 
 from app.database.session import SessionLocal
 from app.utils.token_factory import validate_access_token
@@ -18,8 +20,12 @@ def get_db() -> Generator:
 def get_uuid_from_token(request: Request) -> Optional[str]:
     if 'authorization' in request.headers.keys():
         token = request.headers.get('authorization')
+        token = token.replace('Bearer ', '')
+    elif 'Authorization' in request.headers.keys():
+        token = request.headers.get('Authorization')
+        token = token.replace('Bearer ', '')
     else:
-        raise HTTPException(status_code=401, detail=f"X-Token header invalid")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"X-Token header invalid")
     payload = validate_access_token(token=token)
     if payload.expire < datetime.utcnow():
         raise token_expired_exception  # need refresh

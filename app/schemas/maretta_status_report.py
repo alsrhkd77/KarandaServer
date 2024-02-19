@@ -10,7 +10,6 @@ class MarettaStatusReportBase(BaseModel):
     alive: bool
 
 
-
 class MarettaStatusReportCreate(MarettaStatusReportBase):
     pass
 

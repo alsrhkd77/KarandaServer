@@ -20,5 +20,10 @@ class FirestoreProvider:
         properties = ref.to_dict()['properties']
         return properties
 
+    def get_trade_market_data(self):
+        ref = self.db.collection(u'defaultData').document(u'trade-market').get()
+        data = ref.to_dict()
+        return data
+
 
 firestore_provider = FirestoreProvider()

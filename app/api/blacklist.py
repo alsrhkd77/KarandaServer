@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
+from starlette import status
 
 from app.api.dependencies import get_uuid_from_token
 from app.crud.crud_blacklist_user import crud_blacklist_user
@@ -16,7 +17,7 @@ def create_maretta_blacklist(request: Request, data: BlacklistUserCreate):
     db = request.state.db
     user = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
     if user.discord_id == data.target_discord_id:
-        return HTTPException(status_code=400)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     data = crud_blacklist_user.create(db=db, item=data, owner_id=user.id, blocking_code="001")
     blocked_user = crud_user.get_by_discord_id(db=db, discord_id=data.target_discord_id)
     return user_to_blocked_user(blocked_user)

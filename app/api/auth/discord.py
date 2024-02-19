@@ -34,7 +34,6 @@ def authentication_windows(code: str, request: Request, host_url: str = Depends(
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token, refresh_token = authenticate(access_token=data['access_token'], db=request.state.db)
     url = f"http://localhost:8082"
-    # redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     return RedirectResponse(url=redirect_url)
 
@@ -44,10 +43,8 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token, refresh_token = authenticate(access_token=data['access_token'], db=request.state.db)
     url = f"{settings.web_front_url}/#/auth/authenticate"
-    # redirect_url = f"{url}?token={token}&social-token={data['access_token']}&refresh-token={data['refresh_token']}"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     response = RedirectResponse(url=redirect_url)
-    response.set_cookie(key='karanda', value="token", domain="karanda.kr", httponly=True)  # test
     return response
 
 
@@ -67,7 +64,7 @@ def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token
                     'username': data['username'],
                     'discord_id': data['id'],
                 })
-                response.set_cookie(key='karanda', value="token", domain="karanda.kr", httponly=True)  # test
+                response.set_cookie(key='karanda', value="field", domain=".karanda.kr", httponly=True)  # test
                 return response
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
@@ -100,5 +97,5 @@ def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
         user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
         if user is not None:
             crud_user.remove(db=request.state.db, id=user.id)
-            return Response(status_code=200)
+            return Response(status_code=status.HTTP_200_OK)
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)

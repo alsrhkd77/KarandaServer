@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, Response, Body
+from starlette import status
 
 from app.crud.crud_checklist_item import crud_checklist_cycle_item
 from app.crud.crud_checklist_finished_item import crud_checklist_finished_item
@@ -18,7 +19,7 @@ def get_checklist_items(request: Request):
     db = request.state.db
     data = crud_checklist_cycle_item.get_all_by_user_uuid(db=db, user_uuid=user_uuid)
     if data is None:
-        return Response(status_code=200)
+        return Response(status_code=status.HTTP_200_OK)
     return data
 
 
@@ -28,7 +29,7 @@ def get_finished_items(request: Request):
     db = request.state.db
     data = crud_checklist_finished_item.get_all_by_user_uuid(db=db, user_uuid=user_uuid)
     if data is None:
-        return Response(status_code=200)
+        return Response(status_code=status.HTTP_200_OK)
     return data
 
 
@@ -39,7 +40,7 @@ def create_checklist_item(item_data: ChecklistItemCreate, request: Request):
     owner = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
     item = crud_checklist_cycle_item.create(db=db, item=item_data, owner_id=owner.id)
     if item is None:
-        return Response(status_code=201)
+        return Response(status_code=status.HTTP_201_CREATED)
     return item
 
 
