@@ -21,6 +21,7 @@ from app.crud.crud_bdo_item import crud_bdo_item
 from app.utils.web_socket_manager import trade_market_websocket_manager
 
 router = APIRouter(prefix='/trade-market')
+ws_router = APIRouter(prefix='/trade-market')
 
 wait_list_last_update: datetime = None
 wait_item_list = []
@@ -54,7 +55,7 @@ async def check_wait_list():
         await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
 
 
-@router.websocket('/wait-list')
+@ws_router.websocket('/wait-list')
 async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(get_token_from_websocket)]):
     global wait_item_list
     await trade_market_websocket_manager.accept(websocket, subprotocol=token)
