@@ -5,7 +5,7 @@ class WebSocketManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket, subprotocol: str|None = None):
+    async def accept(self, websocket: WebSocket, subprotocol: str|None = None):
         await websocket.accept(subprotocol=subprotocol)
         self.active_connections.append(websocket)
 
