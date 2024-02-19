@@ -59,10 +59,12 @@ async def check_wait_list():
 @ws_router.websocket('/wait-list')
 async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(get_token_from_websocket)]):
     await trade_market_wait_list_manager.accept(websocket, subprotocol=token)
+    '''
     if len(trade_market_wait_list_manager.active_connections) == 1:
-        await trade_market_wait_list_manager.check_wait_list()
+        trade_market_wait_list_manager.check_wait_list()
     else:
-        await trade_market_wait_list_manager.send_to_last()
+        trade_market_wait_list_manager.send_to_last()
+    '''
     try:
         while True:
             data = await websocket.receive_text()

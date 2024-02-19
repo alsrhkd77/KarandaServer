@@ -17,6 +17,7 @@ class TradeMarketWaitListManager(WebSocketManager):
         if self.last_update is None or self.last_update < datetime.now() - timedelta(seconds=90):
             self.wait_item_list = trade_market_provider.wait_list()
             self.last_update = datetime.now()
+
         if self.wait_item_list is not None or self.wait_item_list != []:
             await self.broadcast(json.dumps(jsonable_encoder(self.wait_item_list)))
 
