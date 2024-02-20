@@ -4,6 +4,8 @@ from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 from starlette.requests import Request
 from starlette.websockets import WebSocket, WebSocketDisconnect
+
+from app.crud.crud_market_data import crud_market_data
 from app.utils.web_socket_manager import trade_market_websocket_manager
 
 router = APIRouter(prefix='/test')
@@ -18,6 +20,7 @@ async def echo(websocket: WebSocket):
             await websocket.send_text(json.dumps(jsonable_encoder({'msg': data})))
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
     except WebSocketDisconnect:
+        trade_market_websocket_manager.disconnect(websocket)
         print("disconnect")
 
 
@@ -31,6 +34,7 @@ async def echo_if(websocket: WebSocket):
             if data == 'update':
                 await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
     except WebSocketDisconnect:
+        trade_market_websocket_manager.disconnect(websocket)
         print("disconnect")
 
 
@@ -44,10 +48,28 @@ async def welcome(websocket: WebSocket):
             await websocket.send_text(json.dumps(jsonable_encoder({'msg': data})))
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
     except WebSocketDisconnect:
+        trade_market_websocket_manager.disconnect(websocket)
+        print("disconnect")
+
+
+@router.websocket('/broadcast')
+async def broadcast(websocket: WebSocket):
+    await trade_market_websocket_manager.accept()
+    await websocket.send_text(json.dumps(jsonable_encoder({'msg': 'welcome'})))
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == 'update':
+                await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
+            else:
+                await websocket.send_text('failed')
+    except WebSocketDisconnect:
+        trade_market_websocket_manager.disconnect(websocket)
         print("disconnect")
 
 
 @router.get('/get/{item}')
 def get_test(request: Request, item: str):
     db = request.state.db
-    return f'Hello, {item}!'
+    data = crud_market_data.get_today_by_item_nums(db=db, item_nums=[11853])
+    return f'Hello, {item}, {data[0].item_num}!'
