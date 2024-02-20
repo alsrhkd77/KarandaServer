@@ -41,7 +41,8 @@ async def check_wait_list():
     return
 
 
-@router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
+#@router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
+@router.websocket('/wait-list')
 async def wait_list(websocket: WebSocket):
     global wait_list_last_update
     await trade_market_websocket_manager.accept(websocket)
@@ -59,106 +60,8 @@ async def wait_list(websocket: WebSocket):
     return
 
 
-@router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
-def get_latest(request: Request, target_list: list[str] = Query(None)):
-    """
-    ## Get latest data
-    최신(15분 이내) 거래소 데이터를 반환\n
-    DB에 목표 아이템의 데이터가 없거나 오래된(15분 이상) 데이터일 경우 api에서 새 데이터를 가져와서 업데이트 후 반환\n
-    (날짜가 바뀌었을 경우에도 새 데이터를 가져옴)
-
-    - **target_list**: 리스트 내 아이템은 "item code_enhancement level" 형식으로 구성해야 함
-    """
-    # Check empty list and max length
-    if target_list is None or target_list == [] or len(target_list) > 40:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    db = request.state.db
-    target = []
-    item_num_list = []
-    # Parameter formatting (str -> dict)
-    for t in target_list:
-        item_num, enhancement_level = t.split("_")
-        # Check negative number
-        if int(item_num) < 0 or int(enhancement_level) < 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-        target.append((int(item_num), int(enhancement_level)))
-        item_num_list.append(int(item_num))
-    # Deduplication
-    item_num_list = list(set(item_num_list))
-    bdo_item = crud_bdo_item.get_all_tradeable_item_by_item_num(db=db, item_num_list=item_num_list)
-    # Check tradeable items
-    if len(bdo_item) != len(item_num_list):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    target_item_info = {b.item_num: b for b in bdo_item}
-    # Check enhancement level is within the maximum
-    for item in target:
-        if target_item_info[item[0]].max_enhancement_level < item[1]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    db_data = crud_market_data.get_today_by_item_nums(db=db, item_nums=item_num_list)
-    now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)  # KR
-    need_update = []
-    # Categorize items that need to be updated
-    for key, v in itertools.groupby(db_data, key=lambda x: x.item_num):
-        item_num_list.remove(key)
-        value = list(v)
-        if value[0].date < now - timedelta(minutes=15):
-            need_update = need_update + value
-    for item in need_update:
-        db_data.remove(item)
-    if item_num_list or need_update:
-        # Get latest data from BDO trade market
-        create, update = get_latest_from_trade_market(need_create=item_num_list, need_update=need_update,
-                                                      item_info=target_item_info, now=now)
-        # Insert and update to DB
-        if create:
-            crud_market_data.create_from_list(db=db, data=create)
-            for item in create:
-                db_data.append(MarketDataResponse(**item.dict()))
-        if update:
-            crud_market_data.update_from_list(db=db, data=update)
-            db_data = db_data + update
-    result = []
-    for (item_num, enhancement_level), value in itertools.groupby(db_data, lambda x: (x.item_num, x.enhancement_level)):
-        if (int(item_num), int(enhancement_level)) in target:
-            result = result + list(value)
-    return result
-
-
-def get_latest_from_trade_market(need_create: list, need_update: list[MarketData], item_info: dict, now: datetime):
-    need_update_item = {}
-    need_create_item = []
-    for item in need_update:
-        need_update_item[(int(item.item_num), int(item.enhancement_level))] = MarketDataUpdate.from_orm(item)
-    search_list = [i.item_num for i in need_update]
-    search_list = search_list + need_create
-    search_list = list(set(search_list))
-
-    for search in copy.deepcopy(search_list):
-        if item_info[search].max_enhancement_level == 0:
-            continue
-        item_data = trade_market_provider.sub_list(main_key=search)
-        if item_data:
-            if search in need_create:
-                for data in item_data:
-                    need_create_item.append(MarketDataCreate(**data.dict(), date=now))
-            else:
-                for data in item_data:
-                    need_update_item[(data.item_num, data.enhancement_level)].update(data=data, date=now)
-            search_list.remove(search)
-    if not search_list:
-        return need_create_item, need_update_item.values()
-    item_data = trade_market_provider.search_list(item_list=search_list)
-    if item_data:
-        for data in item_data:
-            if data.item_num in need_create:
-                need_create_item.append(MarketDataCreate(**data.dict(), date=now))
-            else:
-                need_update_item[(data.item_num, data.enhancement_level)].update(data=data, date=now)
-    return need_create_item, list(need_update_item.values())
-
-
-@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
-            dependencies=[Depends(get_uuid_from_token)])
+#@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
+@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
 def detail(request: Request, item_code: int):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
@@ -274,3 +177,100 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
     return MarketDataResponse.from_orm(data)
+
+@router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
+def get_latest(request: Request, target_list: list[str] = Query(None)):
+    """
+    ## Get latest data
+    최신(15분 이내) 거래소 데이터를 반환\n
+    DB에 목표 아이템의 데이터가 없거나 오래된(15분 이상) 데이터일 경우 api에서 새 데이터를 가져와서 업데이트 후 반환\n
+    (날짜가 바뀌었을 경우에도 새 데이터를 가져옴)
+
+    - **target_list**: 리스트 내 아이템은 "item code_enhancement level" 형식으로 구성해야 함
+    """
+    # Check empty list and max length
+    if target_list is None or target_list == [] or len(target_list) > 40:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    db = request.state.db
+    target = []
+    item_num_list = []
+    # Parameter formatting (str -> dict)
+    for t in target_list:
+        item_num, enhancement_level = t.split("_")
+        # Check negative number
+        if int(item_num) < 0 or int(enhancement_level) < 0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        target.append((int(item_num), int(enhancement_level)))
+        item_num_list.append(int(item_num))
+    # Deduplication
+    item_num_list = list(set(item_num_list))
+    bdo_item = crud_bdo_item.get_all_tradeable_item_by_item_num(db=db, item_num_list=item_num_list)
+    # Check tradeable items
+    if len(bdo_item) != len(item_num_list):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    target_item_info = {b.item_num: b for b in bdo_item}
+    # Check enhancement level is within the maximum
+    for item in target:
+        if target_item_info[item[0]].max_enhancement_level < item[1]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    db_data = crud_market_data.get_today_by_item_nums(db=db, item_nums=item_num_list)
+    now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)  # KR
+    need_update = []
+    # Categorize items that need to be updated
+    for key, v in itertools.groupby(db_data, key=lambda x: x.item_num):
+        item_num_list.remove(key)
+        value = list(v)
+        if value[0].date < now - timedelta(minutes=15):
+            need_update = need_update + value
+    for item in need_update:
+        db_data.remove(item)
+    if item_num_list or need_update:
+        # Get latest data from BDO trade market
+        create, update = get_latest_from_trade_market(need_create=item_num_list, need_update=need_update,
+                                                      item_info=target_item_info, now=now)
+        # Insert and update to DB
+        if create:
+            crud_market_data.create_from_list(db=db, data=create)
+            for item in create:
+                db_data.append(MarketDataResponse(**item.dict()))
+        if update:
+            crud_market_data.update_from_list(db=db, data=update)
+            db_data = db_data + update
+    result = []
+    for (item_num, enhancement_level), value in itertools.groupby(db_data, lambda x: (x.item_num, x.enhancement_level)):
+        if (int(item_num), int(enhancement_level)) in target:
+            result = result + list(value)
+    return result
+
+
+def get_latest_from_trade_market(need_create: list, need_update: list[MarketData], item_info: dict, now: datetime):
+    need_update_item = {}
+    need_create_item = []
+    for item in need_update:
+        need_update_item[(int(item.item_num), int(item.enhancement_level))] = MarketDataUpdate.from_orm(item)
+    search_list = [i.item_num for i in need_update]
+    search_list = search_list + need_create
+    search_list = list(set(search_list))
+
+    for search in copy.deepcopy(search_list):
+        if item_info[search].max_enhancement_level == 0:
+            continue
+        item_data = trade_market_provider.sub_list(main_key=search)
+        if item_data:
+            if search in need_create:
+                for data in item_data:
+                    need_create_item.append(MarketDataCreate(**data.dict(), date=now))
+            else:
+                for data in item_data:
+                    need_update_item[(data.item_num, data.enhancement_level)].update(data=data, date=now)
+            search_list.remove(search)
+    if not search_list:
+        return need_create_item, need_update_item.values()
+    item_data = trade_market_provider.search_list(item_list=search_list)
+    if item_data:
+        for data in item_data:
+            if data.item_num in need_create:
+                need_create_item.append(MarketDataCreate(**data.dict(), date=now))
+            else:
+                need_update_item[(data.item_num, data.enhancement_level)].update(data=data, date=now)
+    return need_create_item, list(need_update_item.values())
