@@ -19,7 +19,7 @@ def get_db() -> Generator:
         db.close()
 
 
-def get_uuid_from_token(request: Request) -> Optional[str]:
+async def get_uuid_from_token(request: Request) -> Optional[str]:
     print(request.cookies.keys())
     if 'authorization' in request.headers.keys():
         token = request.headers.get('authorization')

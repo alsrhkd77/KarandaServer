@@ -58,6 +58,7 @@ async def listen_wait_list(websocket: WebSocket):
                 await check_wait_list()
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
+        print("disconnect")
     return
 
 
