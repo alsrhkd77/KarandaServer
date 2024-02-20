@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import and_, func
@@ -11,7 +11,7 @@ from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDa
 
 
 class CRUDMarketData(CRUDBase[MarketData, MarketDataCreate, MarketDataUpdate]):
-    def get_today_by_item_nums(self, db: Session, item_nums: List[int]) -> Optional[List[MarketData]]:
+    async def get_today_by_item_nums(self, db: Session, item_nums: List[int]) -> List[Type[MarketData]]:
         now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)  # KR
         return (db.query(MarketData)
                 .filter(MarketData.item_num.in_(item_nums))
@@ -19,10 +19,10 @@ class CRUDMarketData(CRUDBase[MarketData, MarketDataCreate, MarketDataUpdate]):
                 .order_by(MarketData.date.desc())
                 .all())
 
-    def get_all_by_item_num(self, db:Session, item_num:int) -> Optional[List[MarketData]]:
+    async def get_all_by_item_num(self, db:Session, item_num:int) -> Optional[List[MarketData]]:
         return db.query(MarketData).filter(MarketData.item_num == item_num).order_by(MarketData.date.desc()).all()
 
-    def create_from_list(self, db: Session, data: list[MarketDataCreate]) -> Optional[List[MarketDataResponse]]:
+    async def create_from_list(self, db: Session, data: list[MarketDataCreate]) -> Optional[List[MarketDataResponse]]:
         if not data:
             return
         obj = []
@@ -32,7 +32,7 @@ class CRUDMarketData(CRUDBase[MarketData, MarketDataCreate, MarketDataUpdate]):
         db.commit()
         return obj
 
-    def update_from_list(self, db: Session, data: list[MarketDataUpdate]) -> Optional[List[MarketDataResponse]]:
+    async def update_from_list(self, db: Session, data: list[MarketDataUpdate]) -> Optional[List[MarketDataResponse]]:
         if not data:
             return
         data_list = []

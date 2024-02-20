@@ -88,5 +88,5 @@ async def broadcast(websocket: WebSocket):
 @router.get('/get/{item}')
 def get_test(request: Request, item: str):
     db = request.state.db
-    data = crud_market_data.get_today_by_item_nums(db=db, item_nums=[11853])
+    data = crud_market_data.get_today_by_item_nums(db=db, item_nums=[item])
     return f'Hello, {item}, {data[0].item_num}!'
