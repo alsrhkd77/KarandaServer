@@ -35,7 +35,7 @@ wait_item_list = []
 async def check_wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
-        wait_item_list = trade_market_provider.wait_list()
+        #wait_item_list = trade_market_provider.wait_list()
         wait_list_last_update = datetime.now()
         if wait_item_list is not None:
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
@@ -52,18 +52,12 @@ async def wait_list(websocket: WebSocket):
         await check_wait_list()
     else:
         await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
-
-    async def wait_socket():
+    try:
         while True:
             data = await websocket.receive_text()
             print(data)
             if data == 'update':
                 await check_wait_list()
-
-    loop = asyncio.get_event_loop()
-    try:
-        websocket_loop = loop.create_task(wait_socket())
-        await asyncio.wait([websocket_loop])
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
