@@ -62,7 +62,7 @@ async def listen_wait_list(websocket: WebSocket):
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
-def get_latest(request: Request, target_list: list[str] = Query(None)):
+async def get_latest(request: Request, target_list: list[str] = Query(None)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -161,7 +161,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
-def detail(request: Request, item_code: int):
+async def detail(request: Request, item_code: int):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
