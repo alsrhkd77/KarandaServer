@@ -46,7 +46,6 @@ async def root():
     return "Welcome to Karanda"
 
 
-'''
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
     response = Response("Internal server error", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -56,4 +55,3 @@ async def db_session_middleware(request: Request, call_next):
     finally:
         request.state.db.close()
     return response
-'''

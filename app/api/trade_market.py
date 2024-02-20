@@ -63,8 +63,8 @@ async def wait_list(websocket: WebSocket):
 
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
-def detail(request: Request, item_code: int, db: Session = Depends(get_db)):
-    db = db
+def detail(request: Request, item_code: int):
+    db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())

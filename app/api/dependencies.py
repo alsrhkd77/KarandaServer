@@ -1,8 +1,7 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Generator, Optional, Annotated
-from fastapi import Request, HTTPException, Cookie, Header, WebSocketException
+from fastapi import Request, HTTPException, Cookie, WebSocketException
 from fastapi.params import Query
-from fastapi.security import APIKeyHeader
 from starlette import status
 from starlette.websockets import WebSocket
 
@@ -19,7 +18,7 @@ def get_db() -> Generator:
         db.close()
 
 
-def get_uuid_from_token(request: Request) -> Optional[str]:
+async def get_uuid_from_token(request: Request) -> Optional[str]:
     if request.cookies.keys():
         print(request.cookies.keys())
     if 'authorization' in request.headers.keys():
