@@ -54,7 +54,7 @@ async def welcome(websocket: WebSocket):
 
 @router.websocket('/broadcast')
 async def broadcast(websocket: WebSocket):
-    await trade_market_websocket_manager.accept()
+    await trade_market_websocket_manager.accept(websocket)
     await websocket.send_text(json.dumps(jsonable_encoder({'msg': 'welcome'})))
     try:
         while True:
