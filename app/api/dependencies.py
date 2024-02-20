@@ -43,6 +43,7 @@ async def get_token_from_websocket(
         token: Annotated[str | None, Query()] = None,
 ) -> Optional[str]:
     print(session)
+
     if token is None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
     payload = validate_access_token(token=token)
