@@ -2,6 +2,7 @@ import asyncio
 import copy
 import itertools
 import json
+import typing
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
@@ -10,6 +11,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from sqlalchemy.orm import Session
 from starlette import status
+from starlette.endpoints import WebSocketEndpoint
+from starlette.routing import WebSocketRoute
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.api.dependencies import get_token_from_websocket, get_uuid_from_token, get_db
@@ -18,7 +21,9 @@ from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDa
 from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
+from app.utils.trade_market_wait_list_manager import trade_market_wait_list_manager
 from app.utils.web_socket_manager import trade_market_websocket_manager
+
 
 router = APIRouter(prefix='/trade-market')
 
@@ -35,7 +40,7 @@ wait_item_list = []
 async def check_wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
-        #wait_item_list = trade_market_provider.wait_list()
+        # wait_item_list = trade_market_provider.wait_list()
         wait_list_last_update = datetime.now()
         if wait_item_list is not None:
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
@@ -45,8 +50,18 @@ async def check_wait_list():
 # @router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
 @router.websocket('/wait-list')
 async def wait_list(websocket: WebSocket):
+    await trade_market_wait_list_manager.accept(websocket=websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            if data == 'update':
+                await trade_market_wait_list_manager.check_wait_list()
+            else:
+                await websocket.send_text("")
+    except WebSocketDisconnect:
+        trade_market_websocket_manager.disconnect(websocket)
+    '''
     global wait_list_last_update
-
     await trade_market_websocket_manager.accept(websocket)
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
         await check_wait_list()
@@ -61,6 +76,7 @@ async def wait_list(websocket: WebSocket):
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
+    '''
 
 
 # @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
