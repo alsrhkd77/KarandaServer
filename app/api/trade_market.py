@@ -55,7 +55,7 @@ async def wait_list(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             if data == 'update':
-                await check_wait_list()
+                asyncio.ensure_future(check_wait_list())
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
