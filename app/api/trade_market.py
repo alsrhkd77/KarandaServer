@@ -42,26 +42,34 @@ async def check_wait_list():
     return
 
 
-#@router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
+# @router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
 @router.websocket('/wait-list')
 async def wait_list(websocket: WebSocket):
     global wait_list_last_update
+
     await trade_market_websocket_manager.accept(websocket)
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
         await check_wait_list()
     else:
         await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
-    try:
+
+    async def wait_socket():
         while True:
             data = await websocket.receive_text()
+            print(data)
             if data == 'update':
                 await check_wait_list()
+
+    loop = asyncio.get_event_loop()
+    try:
+        websocket_loop = loop.create_task(wait_socket())
+        await asyncio.wait([websocket_loop])
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
 
 
-#@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
+# @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
 def detail(request: Request, item_code: int, db: Session = Depends(get_db)):
     db = db
@@ -178,6 +186,7 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
     return MarketDataResponse.from_orm(data)
+
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
 def get_latest(request: Request, target_list: list[str] = Query(None), db: Session = Depends(get_db)):
