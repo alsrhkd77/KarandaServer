@@ -19,10 +19,8 @@ from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
 from app.utils.web_socket_manager import trade_market_websocket_manager
-from app.utils.trade_market_wait_list_manager import trade_market_wait_list_manager
 
 router = APIRouter(prefix='/trade-market')
-ws_router = APIRouter(prefix='/trade-market')
 
 wait_list_last_update: datetime = None
 wait_item_list = []
@@ -35,16 +33,6 @@ wait_item_list = []
 '''
 
 
-def wait_list():
-    global wait_list_last_update, wait_item_list
-    if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(minutes=1):
-        wait_item_list = trade_market_provider.wait_list()
-        wait_list_last_update = datetime.now()
-    if wait_item_list is None or wait_item_list == []:
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    return wait_item_list
-
-
 async def check_wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
@@ -54,10 +42,12 @@ async def check_wait_list():
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
     return
 
-@ws_router.websocket('/wait-list')
+
+@router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
 async def listen_wait_list(websocket: WebSocket):
+    global wait_list_last_update
     await trade_market_websocket_manager.accept(websocket)
-    if len(trade_market_websocket_manager.active_connections) == 1:
+    if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
         await check_wait_list()
     else:
         await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
@@ -68,10 +58,11 @@ async def listen_wait_list(websocket: WebSocket):
                 await check_wait_list()
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
+    return
 
 
-@router.get('/get/latest', response_model=list[MarketDataResponse])
-def get_latest(request: Request, target_list: list[str] = Query(None), user_uuid: str = Depends(get_uuid_from_token)):
+@router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
+def get_latest(request: Request, target_list: list[str] = Query(None)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -168,17 +159,16 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
     return need_create_item, list(need_update_item.values())
 
 
-@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-async def detail(request: Request, item_code: int):
-    print("start")
+@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
+            dependencies=[Depends(get_uuid_from_token)])
+def detail(request: Request, item_code: int):
     db = request.state.db
-    data = await crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
+    data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())
 
     create = []
     update = []
-    print("ready")
 
     # Initialize if no data exists
     if data is None or len(data) == 0:
@@ -186,13 +176,12 @@ async def detail(request: Request, item_code: int):
         if item_data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = initialize_price_data(item_info=item_data, now=now, now_date=now_date)
-        await crud_market_data.create_from_list(db=db, data=data)
+        crud_market_data.create_from_list(db=db, data=data)
     else:
         grouped_data = {}
         date_list = []
 
         # Group by datetime
-        print("Group by datetime")
         for k, v in itertools.groupby(data, lambda x: x.date):
             grouped_data[k] = list(v)
             grouped_data[k].sort(key=lambda x: x.enhancement_level)
@@ -202,7 +191,6 @@ async def detail(request: Request, item_code: int):
 
         if date_list[0].date() != now.date():
             # Create today data
-            print("Create today data")
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
             else:
@@ -214,7 +202,6 @@ async def detail(request: Request, item_code: int):
                 create.append(new_data)
 
             # Get price data
-            print("Get price data")
             price_data = []
             for item in grouped_data[date_list[0]]:
                 price_data.append(
@@ -222,7 +209,6 @@ async def detail(request: Request, item_code: int):
 
             # Update yesterday data
             if date_list[0].date() == (now - timedelta(days=1)).date():
-                print("Update yesterday data")
                 for index in range(len(grouped_data[date_list[0]])):
                     update_data = MarketDataUpdate.from_orm(grouped_data[date_list[0]][index])
                     update_data.price = price_data[index][0]
@@ -231,7 +217,6 @@ async def detail(request: Request, item_code: int):
                     price_data[index] = price_data[index][1:]
             # Fill non-existent price data
             if date_list[-1].date() < (now_date - timedelta(days=89)).date():
-                print("Fill non-existent price data")
                 date_without_time = list(map(lambda x: x.date(), date_list))
                 for day in range(len(price_data[0])):
                     if (now_date - timedelta(days=day + 1)).date() not in date_without_time:
@@ -244,7 +229,6 @@ async def detail(request: Request, item_code: int):
 
         # Update today data
         elif date_list[0] < now - timedelta(minutes=15):
-            print("Update today data")
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
             else:
@@ -257,18 +241,15 @@ async def detail(request: Request, item_code: int):
             # del date_list[0]
 
         # Create and update to DB
-        print("Create and update to DB")
         if create:
-            await crud_market_data.create_from_list(db=db, data=create)
+            crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
         if update:
-            await crud_market_data.update_from_list(db=db, data=update)
+            crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
         data.sort(key=lambda x: x.enhancement_level)
-
-        print("return")
 
     return data
 

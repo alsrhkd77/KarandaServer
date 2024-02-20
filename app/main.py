@@ -9,8 +9,6 @@ from app.api.checklist import router as checklist_router
 from app.api.maretta import router as maretta_router
 from app.api.blacklist import router as blacklist_router
 from app.api.trade_market import router as trade_market_router
-from app.api.trade_market import ws_router as ws_trade_market_router
-from app.api.test import router as test_router
 from app.database.base_class import Base
 from app.database.session import engine, SessionLocal
 
@@ -40,8 +38,6 @@ app.include_router(checklist_router)
 app.include_router(maretta_router)
 app.include_router(blacklist_router)
 app.include_router(trade_market_router)
-app.include_router(ws_trade_market_router)
-app.include_router(test_router)
 
 
 @app.get("/")

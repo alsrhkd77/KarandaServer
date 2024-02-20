@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Generator, Optional, Annotated
 from fastapi import Request, HTTPException, Cookie, Header, WebSocketException
+from fastapi.params import Query
 from fastapi.security import APIKeyHeader
 from starlette import status
 from starlette.websockets import WebSocket
@@ -39,12 +40,11 @@ def get_uuid_from_token(request: Request) -> Optional[str]:
 async def get_token_from_websocket(
         websocket: WebSocket,
         session: Annotated[str | None, Cookie()] = None,
+        token: Annotated[str | None, Query()] = None,
 ) -> Optional[str]:
-    headers = websocket.headers
     print(session)
-    if headers is None or 'sec-websocket-protocol' not in headers.keys():
+    if token is None:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    token = headers.get('sec-websocket-protocol')
     payload = validate_access_token(token=token)
     if payload.expire < datetime.utcnow():
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
