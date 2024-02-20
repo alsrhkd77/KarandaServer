@@ -189,6 +189,7 @@ async def detail(request: Request, item_code: int):
         date_list = []
 
         # Group by datetime
+        print("Group by datetime")
         for k, v in itertools.groupby(data, lambda x: x.date):
             grouped_data[k] = list(v)
             grouped_data[k].sort(key=lambda x: x.enhancement_level)
@@ -198,6 +199,7 @@ async def detail(request: Request, item_code: int):
 
         if date_list[0].date() != now.date():
             # Create today data
+            print("Create today data")
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
             else:
@@ -209,6 +211,7 @@ async def detail(request: Request, item_code: int):
                 create.append(new_data)
 
             # Get price data
+            print("Get price data")
             price_data = []
             for item in grouped_data[date_list[0]]:
                 price_data.append(
@@ -216,6 +219,7 @@ async def detail(request: Request, item_code: int):
 
             # Update yesterday data
             if date_list[0].date() == (now - timedelta(days=1)).date():
+                print("Update yesterday data")
                 for index in range(len(grouped_data[date_list[0]])):
                     update_data = MarketDataUpdate.from_orm(grouped_data[date_list[0]][index])
                     update_data.price = price_data[index][0]
@@ -224,6 +228,7 @@ async def detail(request: Request, item_code: int):
                     price_data[index] = price_data[index][1:]
             # Fill non-existent price data
             if date_list[-1].date() < (now_date - timedelta(days=89)).date():
+                print("Fill non-existent price data")
                 date_without_time = list(map(lambda x: x.date(), date_list))
                 for day in range(len(price_data[0])):
                     if (now_date - timedelta(days=day + 1)).date() not in date_without_time:
@@ -236,6 +241,7 @@ async def detail(request: Request, item_code: int):
 
         # Update today data
         elif date_list[0] < now - timedelta(minutes=15):
+            print("Update today data")
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
             else:
@@ -248,6 +254,7 @@ async def detail(request: Request, item_code: int):
             # del date_list[0]
 
         # Create and update to DB
+        print("Create and update to DB")
         if create:
             await crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
@@ -257,6 +264,8 @@ async def detail(request: Request, item_code: int):
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
         data.sort(key=lambda x: x.enhancement_level)
+
+        print("return")
 
     return data
 
