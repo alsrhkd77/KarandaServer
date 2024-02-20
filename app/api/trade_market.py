@@ -168,9 +168,9 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-def detail(request: Request, item_code: int):
+async def detail(request: Request, item_code: int):
     db = request.state.db
-    data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
+    data = await crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())
 
@@ -183,7 +183,7 @@ def detail(request: Request, item_code: int):
         if item_data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = initialize_price_data(item_info=item_data, now=now, now_date=now_date)
-        crud_market_data.create_from_list(db=db, data=data)
+        await crud_market_data.create_from_list(db=db, data=data)
     else:
         grouped_data = {}
         date_list = []
@@ -249,10 +249,10 @@ def detail(request: Request, item_code: int):
 
         # Create and update to DB
         if create:
-            crud_market_data.create_from_list(db=db, data=create)
+            await crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
         if update:
-            crud_market_data.update_from_list(db=db, data=update)
+            await crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
