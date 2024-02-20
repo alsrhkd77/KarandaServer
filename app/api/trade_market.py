@@ -53,13 +53,6 @@ async def check_wait_list():
         if wait_item_list is not None:
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
 
-
-@router.head('/update-wait-list')
-async def update_wait_list():
-    await check_wait_list()
-    return Response(status_code=status.HTTP_200_OK)
-
-
 @ws_router.websocket('/wait-list')
 async def listen_wait_list(websocket: WebSocket):
     await trade_market_websocket_manager.accept(websocket)
@@ -69,7 +62,9 @@ async def listen_wait_list(websocket: WebSocket):
         await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
     try:
         while True:
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            if data == 'update':
+                await check_wait_list()
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
 
