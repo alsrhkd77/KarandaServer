@@ -2,7 +2,6 @@ import asyncio
 import copy
 import itertools
 import json
-import typing
 from datetime import datetime, timedelta, timezone
 from typing import Union
 
@@ -11,17 +10,15 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from sqlalchemy.orm import Session
 from starlette import status
-from starlette.endpoints import WebSocketEndpoint
-from starlette.routing import WebSocketRoute
+
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from app.api.dependencies import get_token_from_websocket, get_uuid_from_token, get_db
+from app.api.dependencies import get_uuid_from_token, get_db, get_token_from_websocket
 from app.schemas.bdo_item import BdoItem
 from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
-from app.utils.trade_market_wait_list_manager import trade_market_wait_list_manager
 from app.utils.web_socket_manager import trade_market_websocket_manager
 
 
@@ -37,30 +34,18 @@ wait_item_list = []
 
 # TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
-async def check_wait_list():
+async def check_wait_list() -> None:
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
-        # wait_item_list = trade_market_provider.wait_list()
+        wait_item_list = trade_market_provider.wait_list()
         wait_list_last_update = datetime.now()
         if wait_item_list is not None:
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
     return
 
 
-# @router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
-@router.websocket('/wait-list')
+@router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
 async def wait_list(websocket: WebSocket):
-    await trade_market_wait_list_manager.accept(websocket=websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            if data == 'update':
-                await trade_market_wait_list_manager.check_wait_list()
-            else:
-                await websocket.send_text("")
-    except WebSocketDisconnect:
-        trade_market_websocket_manager.disconnect(websocket)
-    '''
     global wait_list_last_update
     await trade_market_websocket_manager.accept(websocket)
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
@@ -70,17 +55,14 @@ async def wait_list(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            print(data)
             if data == 'update':
                 await check_wait_list()
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
-    '''
 
 
-# @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
-@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
+@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
 def detail(request: Request, item_code: int, db: Session = Depends(get_db)):
     db = db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
