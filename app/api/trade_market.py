@@ -52,6 +52,7 @@ async def check_wait_list():
         wait_list_last_update = datetime.now()
         if wait_item_list is not None:
             await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
+    return
 
 @ws_router.websocket('/wait-list')
 async def listen_wait_list(websocket: WebSocket):
@@ -169,6 +170,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
 async def detail(request: Request, item_code: int):
+    print("start")
     db = request.state.db
     data = await crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -176,6 +178,7 @@ async def detail(request: Request, item_code: int):
 
     create = []
     update = []
+    print("ready")
 
     # Initialize if no data exists
     if data is None or len(data) == 0:
