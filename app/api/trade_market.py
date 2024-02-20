@@ -3,13 +3,12 @@ import copy
 import itertools
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Union, Any, Annotated
+from typing import Union
 
-from fastapi import APIRouter, Request, HTTPException, Depends, WebSocketException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from starlette import status
-from starlette.responses import Response
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.api.dependencies import get_token_from_websocket, get_uuid_from_token
@@ -27,11 +26,10 @@ wait_item_list = []
 
 '''
 강화레벨이 0이 아닌것들은 무조건 한번에 업데이트
-
-처음 데이터 초기화는 직접 해야할 듯
-=> 새 아이템 넣으면서 초기값 같이 세팅하는 함수 하나 만들어야함
 '''
 
+
+# TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
 async def check_wait_list():
     global wait_list_last_update, wait_item_list
@@ -44,7 +42,7 @@ async def check_wait_list():
 
 
 @router.websocket('/wait-list', dependencies=[Depends(get_token_from_websocket)])
-async def listen_wait_list(websocket: WebSocket):
+async def wait_list(websocket: WebSocket):
     global wait_list_last_update
     await trade_market_websocket_manager.accept(websocket)
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
@@ -58,12 +56,11 @@ async def listen_wait_list(websocket: WebSocket):
                 await check_wait_list()
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
-        print("disconnect")
     return
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
-async def get_latest(request: Request, target_list: list[str] = Query(None)):
+def get_latest(request: Request, target_list: list[str] = Query(None)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -162,9 +159,9 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
-async def detail(request: Request, item_code: int):
+def detail(request: Request, item_code: int):
     db = request.state.db
-    data = await crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
+    data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())
 
@@ -173,11 +170,11 @@ async def detail(request: Request, item_code: int):
 
     # Initialize if no data exists
     if data is None or len(data) == 0:
-        item_data = await crud_bdo_item.get_tradeable_item_by_item_num(db=db, item_num=item_code)
+        item_data = crud_bdo_item.get_tradeable_item_by_item_num(db=db, item_num=item_code)
         if item_data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = initialize_price_data(item_info=item_data, now=now, now_date=now_date)
-        await crud_market_data.create_from_list(db=db, data=data)
+        crud_market_data.create_from_list(db=db, data=data)
     else:
         grouped_data = {}
         date_list = []
@@ -243,10 +240,10 @@ async def detail(request: Request, item_code: int):
 
         # Create and update to DB
         if create:
-            await crud_market_data.create_from_list(db=db, data=create)
+            crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
         if update:
-            await crud_market_data.update_from_list(db=db, data=update)
+            crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
