@@ -45,7 +45,7 @@ def wait_list():
     return wait_item_list
 
 
-async def update_wait_list():
+async def check_wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
         wait_item_list = trade_market_provider.wait_list()
@@ -56,7 +56,7 @@ async def update_wait_list():
 
 @router.head('/update-wait-list')
 async def update_wait_list():
-    await update_wait_list()
+    await check_wait_list()
     return Response(status_code=status.HTTP_200_OK)
 
 
@@ -64,7 +64,7 @@ async def update_wait_list():
 async def listen_wait_list(websocket: WebSocket):
     await trade_market_websocket_manager.accept(websocket)
     if len(trade_market_websocket_manager.active_connections) == 1:
-        await update_wait_list()
+        await check_wait_list()
     else:
         await websocket.send_text(json.dumps(jsonable_encoder(wait_item_list)))
     try:
