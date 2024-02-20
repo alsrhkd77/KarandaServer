@@ -17,4 +17,4 @@ COPY ./app /code/app
 CMD ["export", "env=deploy"]
 CMD ["export", "web_front_url=https://www.karanda.kr"]
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
