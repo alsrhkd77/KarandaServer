@@ -7,6 +7,7 @@ from starlette.requests import Request
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.crud.crud_market_data import crud_market_data
+from app.trade_market_provider import trade_market_provider
 from app.utils.web_socket_manager import trade_market_websocket_manager
 
 router = APIRouter(prefix='/test')
@@ -60,16 +61,17 @@ item_list = []
 async def check():
     global last_update, item_list
     if last_update is None or last_update < datetime.now() - timedelta(minutes=1):
-        item_list.append(len(item_list))
+        item_list.append(len(trade_market_provider.wait_list()))
         last_update = datetime.now()
-    if item_list is not None and len(item_list) > 0:
-        await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': item_list})))
+        if item_list is not None and len(item_list) > 0:
+            await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': item_list})))
 
 
 @router.websocket('/broadcast')
 async def broadcast(websocket: WebSocket):
     await trade_market_websocket_manager.accept(websocket)
-    await websocket.send_text(json.dumps(jsonable_encoder({'msg': 'welcome'})))
+    if item_list is not None and len(item_list) > 0:
+        await websocket.send_text(json.dumps(jsonable_encoder({'msg': item_list})))
     try:
         while True:
             data = await websocket.receive_text()

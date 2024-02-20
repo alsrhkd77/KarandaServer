@@ -35,7 +35,6 @@ wait_item_list = []
 '''
 
 
-# @router.get('/get/wait-list', response_model=list[MarketWaitItem])
 def wait_list():
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(minutes=1):
@@ -48,17 +47,16 @@ def wait_list():
 
 async def check_wait_list():
     global wait_list_last_update, wait_item_list
-
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
         wait_item_list = trade_market_provider.wait_list()
         wait_list_last_update = datetime.now()
-    if wait_item_list is not None or wait_item_list != []:
-        await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
+        if wait_item_list is not None and len(wait_item_list) > 0:
+            await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder(wait_item_list)))
 
 
 @ws_router.websocket('/wait-list')
-async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(get_token_from_websocket)]):
-    await trade_market_wait_list_manager.accept(websocket, subprotocol=token)
+async def listen_wait_list(websocket: WebSocket):
+    await trade_market_wait_list_manager.accept(websocket)
     '''
     if len(trade_market_wait_list_manager.active_connections) == 1:
         trade_market_wait_list_manager.check_wait_list()
@@ -70,8 +68,9 @@ async def listen_wait_list(websocket: WebSocket, token: Annotated[str, Depends(g
             data = await websocket.receive_text()
             if data == 'update':
                 await trade_market_wait_list_manager.check_wait_list()
+            else:
+                await websocket.send_text('failed')
     except WebSocketDisconnect:
-        print("disconnect")
         trade_market_wait_list_manager.disconnect(websocket)
 
 
@@ -174,7 +173,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-def detail(request: Request, item_code: int, user_uuid: str = Depends(get_uuid_from_token)):
+def detail(request: Request, item_code: int):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
