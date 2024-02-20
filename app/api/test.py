@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
@@ -52,6 +53,19 @@ async def welcome(websocket: WebSocket):
         print("disconnect")
 
 
+last_update: datetime = None
+item_list = []
+
+
+async def check():
+    global last_update, item_list
+    if last_update is None or last_update < datetime.now() - timedelta(minutes=1):
+        item_list.append(len(item_list))
+        last_update = datetime.now()
+    if item_list is not None and len(item_list) > 0:
+        await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': item_list})))
+
+
 @router.websocket('/broadcast')
 async def broadcast(websocket: WebSocket):
     await trade_market_websocket_manager.accept(websocket)
@@ -60,7 +74,8 @@ async def broadcast(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             if data == 'update':
-                await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
+                await check()
+                # await trade_market_websocket_manager.broadcast(json.dumps(jsonable_encoder({'msg': data})))
             else:
                 await websocket.send_text('failed')
     except WebSocketDisconnect:
