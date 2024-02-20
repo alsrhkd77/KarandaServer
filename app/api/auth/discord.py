@@ -7,7 +7,7 @@ from starlette import status
 
 from app.config.settings import settings
 from app.discord_provider import discord_provider
-from app.api.dependencies import get_uuid_from_token, get_host_url
+from app.api.dependencies import get_uuid_from_token, get_host_url, get_db
 from app.crud.crud_user import crud_user
 from app.schemas.user import DiscordUserCreate
 from app.utils.token_factory import create_access_token, validate_access_token, create_refresh_token, \
@@ -30,18 +30,18 @@ def authenticate(access_token: str, db: Session):
 
 
 @router.get('/authenticate/windows')
-def authentication_windows(code: str, request: Request, host_url: str = Depends(get_host_url)):
+def authentication_windows(code: str, request: Request, host_url: str = Depends(get_host_url), db: Session = Depends(get_db)):
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
-    token, refresh_token = authenticate(access_token=data['access_token'], db=request.state.db)
+    token, refresh_token = authenticate(access_token=data['access_token'], db=db)
     url = f"http://localhost:8082"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     return RedirectResponse(url=redirect_url)
 
 
 @router.get('/authenticate/web')
-def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url)):
+def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url), db: Session = Depends(get_db)):
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
-    token, refresh_token = authenticate(access_token=data['access_token'], db=request.state.db)
+    token, refresh_token = authenticate(access_token=data['access_token'], db=db)
     url = f"{settings.web_front_url}/#/auth/authenticate"
     redirect_url = f"{url}?token={token}&&refresh-token={refresh_token}"
     response = RedirectResponse(url=redirect_url)
@@ -49,16 +49,16 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
 
 
 @router.get('/authorization')
-def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
+def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token), db: Session = Depends(get_db)):
     if request.state.expire < datetime.utcnow() - timedelta(days=1):
         raise token_expired_exception  # need refresh
     if user_uuid != '':
-        user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
+        user = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
         if user is not None:
             data = discord_provider.get_user_data_with_id(user.discord_id)
             if data['id'] == user.discord_id:
                 if user.user_name is None or data['username'] != user.user_name:
-                    crud_user.update(request.state.db, db_obj=user, obj_in={"user_name": data['username']})
+                    crud_user.update(db=db, db_obj=user, obj_in={"user_name": data['username']})
                 response = JSONResponse(content={
                     'avatar': f"{data['id']}/{data['avatar']}.png",
                     'username': data['username'],
@@ -70,13 +70,13 @@ def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token
 
 
 @router.post('/refresh')
-def refresh_access_token(request: Request):
+def refresh_access_token(request: Request, db: Session = Depends(get_db)):
     token = validate_access_token(token=request.headers['authorization'])
     refresh_token = validate_refresh_token(token=request.headers['refresh-token'])
 
     if refresh_token.expire < datetime.utcnow():
         raise token_expired_exception
-    user = crud_user.get_by_user_uuid(db=request.state.db, user_uuid=refresh_token.user_uuid)
+    user = crud_user.get_by_user_uuid(db=db, user_uuid=refresh_token.user_uuid)
     if token.user_uuid == refresh_token.user_uuid == user.user_uuid:
         data = discord_provider.get_user_data_with_id(user.discord_id)
         token = create_access_token(user_uuid=user.user_uuid)
@@ -92,10 +92,10 @@ def refresh_access_token(request: Request):
 
 
 @router.delete('/unregister')
-def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
+def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token), db: Session = Depends(get_db)):
     if user_uuid != '':
-        user = crud_user.get_by_user_uuid(request.state.db, user_uuid=user_uuid)
+        user = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
         if user is not None:
-            crud_user.remove(db=request.state.db, id=user.id)
+            crud_user.remove(db=db, id=user.id)
             return Response(status_code=status.HTTP_200_OK)
     return Response(status_code=status.HTTP_401_UNAUTHORIZED)

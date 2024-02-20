@@ -1,22 +1,23 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request, Response, Body
+from sqlalchemy.orm import Session
 from starlette import status
 
 from app.crud.crud_checklist_item import crud_checklist_cycle_item
 from app.crud.crud_checklist_finished_item import crud_checklist_finished_item
 from app.crud.crud_user import crud_user
 from app.schemas.checklist_item import ChecklistItemCreate, ChecklistItemUpdate
-from app.api.dependencies import get_uuid_from_token
+from app.api.dependencies import get_uuid_from_token, get_db
 from app.schemas.checklist_finished_item import ChecklistFinishedItemCreate
 
 router = APIRouter(prefix='/checklist', dependencies=[Depends(get_uuid_from_token)])
 
 
 @router.get('/get/checklist-items')
-def get_checklist_items(request: Request):
+def get_checklist_items(request: Request, db: Session = Depends(get_db)):
     user_uuid = request.state.user_uuid
-    db = request.state.db
+    db = db
     data = crud_checklist_cycle_item.get_all_by_user_uuid(db=db, user_uuid=user_uuid)
     if data is None:
         return Response(status_code=status.HTTP_200_OK)
@@ -24,9 +25,9 @@ def get_checklist_items(request: Request):
 
 
 @router.get('/get/finished-items')
-def get_finished_items(request: Request):
+def get_finished_items(request: Request, db: Session = Depends(get_db)):
     user_uuid = request.state.user_uuid
-    db = request.state.db
+    db = db
     data = crud_checklist_finished_item.get_all_by_user_uuid(db=db, user_uuid=user_uuid)
     if data is None:
         return Response(status_code=status.HTTP_200_OK)

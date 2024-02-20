@@ -8,10 +8,11 @@ from typing import Union
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
+from sqlalchemy.orm import Session
 from starlette import status
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from app.api.dependencies import get_token_from_websocket, get_uuid_from_token
+from app.api.dependencies import get_token_from_websocket, get_uuid_from_token, get_db
 from app.schemas.bdo_item import BdoItem
 from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
@@ -62,8 +63,8 @@ async def wait_list(websocket: WebSocket):
 
 #@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse])
-def detail(request: Request, item_code: int):
-    db = request.state.db
+def detail(request: Request, item_code: int, db: Session = Depends(get_db)):
+    db = db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())
@@ -179,7 +180,7 @@ def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate
     return MarketDataResponse.from_orm(data)
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
-def get_latest(request: Request, target_list: list[str] = Query(None)):
+def get_latest(request: Request, target_list: list[str] = Query(None), db: Session = Depends(get_db)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -191,7 +192,7 @@ def get_latest(request: Request, target_list: list[str] = Query(None)):
     # Check empty list and max length
     if target_list is None or target_list == [] or len(target_list) > 40:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    db = request.state.db
+    db = db
     target = []
     item_num_list = []
     # Parameter formatting (str -> dict)
