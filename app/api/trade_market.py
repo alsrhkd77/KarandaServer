@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import itertools
 import json
@@ -20,7 +19,6 @@ from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
 from app.utils.web_socket_manager import trade_market_websocket_manager
-
 
 router = APIRouter(prefix='/trade-market')
 
@@ -62,8 +60,9 @@ async def wait_list(websocket: WebSocket):
     return
 
 
-@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],dependencies=[Depends(get_uuid_from_token)])
-def detail(request: Request, item_code: int):
+@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
+            dependencies=[Depends(get_uuid_from_token)])
+async def detail(request: Request, item_code: int):
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
