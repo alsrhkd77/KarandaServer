@@ -66,7 +66,7 @@ async def wait_list(websocket: WebSocket):
 def detail(request: Request, item_code: int):
     print(f'start: {datetime.now()}')
     db = request.state.db
-    data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
+    data = list(map(market_data_model_to_schema, crud_market_data.get_all_by_item_num(db=db, item_num=item_code)))
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
     now_date = datetime.combine(now, datetime.min.time())
 
@@ -161,22 +161,23 @@ def detail(request: Request, item_code: int):
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
-            result = result + create
+            #result = result + create
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
-            result = result + update
+            #result = result + update
             print(f'finish update: {datetime.now()}')
 
         # print(f'start combine lists: {datetime.now()}')
-        # data = list(map(market_data_to_market_data_response, data)) + create + update
+        data = list(map(market_data_to_market_data_response, data)) + create + update
         # print(f'finish combine lists: {datetime.now()}')
         # print(f'start sort lists: {datetime.now()}')
-        # data.sort(key=lambda x: x.enhancement_level)
+        data.sort(key=lambda x: x.enhancement_level)
     print(f'start combine lists: {datetime.now()}')
     # result = result + data
+    '''
     for item in data:
         result.append(MarketDataResponse(
             item_num=item.item_num,
@@ -186,9 +187,10 @@ def detail(request: Request, item_code: int):
             current_stock=item.current_stock,
             date=item.date,
         ))
-    # print(jsonable_encoder(data))
+        '''
+    #print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
-    return result
+    return data
 
 
 def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime):
@@ -220,6 +222,10 @@ def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate
         current_stock=data.current_stock,
         date=data.date,
     )
+
+
+def market_data_model_to_schema(data):
+    return MarketData.from_orm(data)
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
