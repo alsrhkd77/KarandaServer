@@ -32,6 +32,7 @@ wait_item_list = []
 
 # TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
+'''
 async def check_wait_list() -> None:
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
@@ -58,7 +59,7 @@ async def wait_list(websocket: WebSocket):
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
-
+'''
 
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
