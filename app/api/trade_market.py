@@ -13,8 +13,9 @@ from starlette import status
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.api.dependencies import get_uuid_from_token, get_db, get_token_from_websocket
+from app.models import MarketData
 from app.schemas.bdo_item import BdoItem
-from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
+from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse
 from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
