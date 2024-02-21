@@ -159,19 +159,21 @@ def detail(request: Request, item_code: int):
         if create:
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
-            create = list(map(market_data_to_market_data_response, create))
+            #create = list(map(market_data_to_market_data_response, create))
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
-            update = list(map(market_data_to_market_data_response, update))
+            #update = list(map(market_data_to_market_data_response, update))
             print(f'finish update: {datetime.now()}')
 
         print(f'start combine lists: {datetime.now()}')
-        data = list(map(market_data_to_market_data_response, data)) + create + update
+        #data = list(map(market_data_to_market_data_response, data)) + create + update
+        data = data + create + update
         print(f'start sort lists: {datetime.now()}')
         data.sort(key=lambda x: x.enhancement_level)
     print(f'finish all process: {datetime.now()}')
+    print(jsonable_encoder(data))
     return data
 
 
