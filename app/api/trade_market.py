@@ -2,7 +2,7 @@ import copy
 import itertools
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Union
+from typing import Union, List
 
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
@@ -61,7 +61,7 @@ async def wait_list(websocket: WebSocket):
 '''
 
 
-@router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
+@router.get('/get/detail/{item_code}', response_model=List[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
 def detail(request: Request, item_code: int):
     print(f'start: {datetime.now()}')
@@ -72,6 +72,7 @@ def detail(request: Request, item_code: int):
 
     create = []
     update = []
+    result: list = []
 
     print(f'finish init: {datetime.now()}')
     # Initialize if no data exists
@@ -160,21 +161,23 @@ def detail(request: Request, item_code: int):
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             #create = list(map(market_data_to_market_data_response, create))
+            result = result + create
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
-            #update = list(map(market_data_to_market_data_response, update))
+            #update = list(map(market_data_to_market_data_response, update))\
+            result = result + update
             print(f'finish update: {datetime.now()}')
 
         print(f'start combine lists: {datetime.now()}')
         #data = list(map(market_data_to_market_data_response, data)) + create + update
-        data = data + create + update
         #print(f'start sort lists: {datetime.now()}')
         #data.sort(key=lambda x: x.enhancement_level)
+    result = result + data
+    print(jsonable_encoder(result))
     print(f'finish all process: {datetime.now()}')
-    print(jsonable_encoder(data))
-    return data
+    return result
 
 
 def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime):
