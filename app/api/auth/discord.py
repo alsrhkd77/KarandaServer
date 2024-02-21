@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Request, Response, Depends
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -7,7 +7,7 @@ from starlette import status
 
 from app.config.settings import settings
 from app.discord_provider import discord_provider
-from app.api.dependencies import get_uuid_from_token, get_host_url, get_db
+from app.api.dependencies import get_uuid_from_token, get_host_url
 from app.crud.crud_user import crud_user
 from app.schemas.user import DiscordUserCreate
 from app.utils.token_factory import create_access_token, validate_access_token, create_refresh_token, \
@@ -30,7 +30,8 @@ def authenticate(access_token: str, db: Session):
 
 
 @router.get('/authenticate/windows')
-def authentication_windows(code: str, request: Request, host_url: str = Depends(get_host_url), db: Session = Depends(get_db)):
+def authentication_windows(code: str, request: Request, host_url: str = Depends(get_host_url)):
+    db = request.state.db
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token, refresh_token = authenticate(access_token=data['access_token'], db=db)
     url = f"http://localhost:8082"
@@ -39,7 +40,8 @@ def authentication_windows(code: str, request: Request, host_url: str = Depends(
 
 
 @router.get('/authenticate/web')
-def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url), db: Session = Depends(get_db)):
+def authentication_web(code: str, request: Request, host_url: str = Depends(get_host_url)):
+    db = request.state.db
     data = discord_provider.exchange_code(code=code, redirect_url=host_url)
     token, refresh_token = authenticate(access_token=data['access_token'], db=db)
     url = f"{settings.web_front_url}/#/auth/authenticate"
@@ -49,7 +51,8 @@ def authentication_web(code: str, request: Request, host_url: str = Depends(get_
 
 
 @router.get('/authorization')
-def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token), db: Session = Depends(get_db)):
+def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
+    db = request.state.db
     if request.state.expire < datetime.utcnow() - timedelta(days=1):
         raise token_expired_exception  # need refresh
     if user_uuid != '':
@@ -64,13 +67,14 @@ def authorization(request: Request, user_uuid: str = Depends(get_uuid_from_token
                     'username': data['username'],
                     'discord_id': data['id'],
                 })
-                response.set_cookie(key='karanda', value="field", domain=".karanda.kr", httponly=True)  # test
+                response.set_cookie(key='karanda', value="field", domain=".karanda.kr", httponly=True,samesite="strict")    # test
                 return response
     return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @router.post('/refresh')
-def refresh_access_token(request: Request, db: Session = Depends(get_db)):
+def refresh_access_token(request: Request):
+    db = request.state.db
     token = validate_access_token(token=request.headers['authorization'])
     refresh_token = validate_refresh_token(token=request.headers['refresh-token'])
 
@@ -92,7 +96,8 @@ def refresh_access_token(request: Request, db: Session = Depends(get_db)):
 
 
 @router.delete('/unregister')
-def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token), db: Session = Depends(get_db)):
+def unregister(request: Request, user_uuid: str = Depends(get_uuid_from_token)):
+    db = request.state.db
     if user_uuid != '':
         user = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
         if user is not None:

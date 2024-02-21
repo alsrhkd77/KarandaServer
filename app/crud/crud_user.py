@@ -39,5 +39,4 @@ class CRUDUser(CRUDBase[User, DiscordUserCreate, UserUpdate]):
         return db_obj
 
 
-
 crud_user = CRUDUser(User)

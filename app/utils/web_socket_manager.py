@@ -22,9 +22,5 @@ class WebSocketManager:
         for connection in self.active_connections:
             await connection.send_text(message)
 
-    async def broadcast_json(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_json(message)
-
 
 trade_market_websocket_manager = WebSocketManager()

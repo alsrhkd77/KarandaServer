@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlalchemy.orm import Session
 from starlette import status
 
-from app.api.dependencies import get_uuid_from_token, get_db
+from app.api.dependencies import get_uuid_from_token
 from app.crud.crud_blacklist_user import crud_blacklist_user
 from app.crud.crud_user import crud_user
 from app.models import User
@@ -13,9 +12,9 @@ router = APIRouter(prefix='/blacklist', dependencies=[Depends(get_uuid_from_toke
 
 
 @router.post('/create/maretta')
-def create_maretta_blacklist(request: Request, data: BlacklistUserCreate, db: Session = Depends(get_db)):
+def create_maretta_blacklist(request: Request, data: BlacklistUserCreate):
     user_uuid = request.state.user_uuid
-    db = db
+    db = request.state.db
     user = crud_user.get_by_user_uuid(db=db, user_uuid=user_uuid)
     if user.discord_id == data.target_discord_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
@@ -25,8 +24,8 @@ def create_maretta_blacklist(request: Request, data: BlacklistUserCreate, db: Se
 
 
 @router.get('/get/maretta')
-def get_maretta_blacklist(request: Request, db: Session = Depends(get_db)):
-    db = db
+def get_maretta_blacklist(request: Request):
+    db = request.state.db
     user_uuid = request.state.user_uuid
     data = crud_blacklist_user.get_all_by_user_uuid_and_blocking_code(db=db, user_uuid=user_uuid, blocking_code="001")
     result = []

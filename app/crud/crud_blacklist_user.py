@@ -14,8 +14,10 @@ class CRUDBlacklistUser(CRUDBase[BlacklistUser, BlacklistUserCreate, BlacklistUs
     def get_by_target_discord_id_and_owner_id_and_blocking_code(self, db: Session, *, target_discord_id: str,
                                                                 owner_id: int, blocking_code: str) -> Optional[
         BlacklistUser]:
-        return db.query(BlacklistUser).filter_by(target_discord_id=target_discord_id, blocking_code=blocking_code,
-                                                 owner_id=owner_id).one_or_none()
+        return db.query(BlacklistUser).filter_by(
+            target_discord_id=target_discord_id,
+            blocking_code=blocking_code,
+            owner_id=owner_id).one_or_none()
 
     def get_all_by_user_uuid_and_blocking_code(self, db: Session, *, user_uuid: int, blocking_code: str) -> Optional[
         List[BlockedUser] | None]:

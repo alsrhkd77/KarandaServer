@@ -1,6 +1,3 @@
-import logging
-import time
-
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette import status
@@ -12,8 +9,6 @@ from app.api.blacklist import router as blacklist_router
 from app.api.trade_market import router as trade_market_router
 from app.database.base_class import Base
 from app.database.session import engine, SessionLocal
-
-logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -45,7 +40,9 @@ app.include_router(trade_market_router)
 async def root():
     return "Welcome to Karanda"
 
-
+"""
+응답 헤더에 서버 처리 소요 시간을 추가하는 미들웨어
+'''python
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     start_time = time.time()
@@ -53,6 +50,8 @@ async def add_process_time_header(request: Request, call_next):
     process_time = time.time() - start_time
     response.headers["X-Process-Time"] = str(process_time)
     return response
+'''
+"""
 
 
 @app.middleware("http")

@@ -7,12 +7,11 @@ from typing import Union, List
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
-from sqlalchemy.orm import Session
 from starlette import status
 
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
-from app.api.dependencies import get_uuid_from_token, get_db, get_token_from_websocket
+from app.api.dependencies import get_uuid_from_token, get_token_from_websocket
 from app.schemas.bdo_item import BdoItem
 from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
@@ -29,8 +28,6 @@ wait_item_list = []
 강화레벨이 0이 아닌것들은 무조건 한번에 업데이트
 '''
 
-
-# TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
 async def check_wait_list() -> None:
     global wait_list_last_update, wait_item_list
@@ -63,7 +60,6 @@ async def wait_list(websocket: WebSocket):
 @router.get('/get/detail/{item_code}', response_model=List[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
 def detail(request: Request, item_code: int):
-    print(f'start: {datetime.now()}')
     db = request.state.db
     data = list(map(market_data_model_to_schema, crud_market_data.get_all_by_item_num(db=db, item_num=item_code)))
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -71,23 +67,18 @@ def detail(request: Request, item_code: int):
 
     create = []
     update = []
-    # result: list = []
 
-    print(f'finish init: {datetime.now()}')
     # Initialize if no data exists
     if data is None or len(data) == 0:
-        print(f'start data init: {datetime.now()}')
         item_data = crud_bdo_item.get_tradeable_item_by_item_num(db=db, item_num=item_code)
         if item_data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = initialize_price_data(item_info=item_data, now=now, now_date=now_date)
         crud_market_data.create_from_list(db=db, data=data)
-        print(f'finish data init: {datetime.now()}')
     else:
         grouped_data = {}
         date_list = []
 
-        print(f'start group by: {datetime.now()}')
         # Group by datetime
         for k, v in itertools.groupby(data, lambda x: x.date):
             grouped_data[k] = list(v)
@@ -95,10 +86,8 @@ def detail(request: Request, item_code: int):
             date_list.append(k)
         date_list = date_list[:90] if len(date_list) > 90 else date_list
         date_list.sort(reverse=True)
-        print(f'finish group by: {datetime.now()}')
 
         if date_list[0].date() != now.date():
-            print(f'get realtime data: {datetime.now()}')
             # Create today data
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
@@ -109,7 +98,6 @@ def detail(request: Request, item_code: int):
                                             cumulative_volume=r.cumulative_volume, current_stock=r.current_stock,
                                             date=now)
                 create.append(new_data)
-            print(f'finish to get realtime data: {datetime.now()}')
 
             # Get price data
             price_data = []
@@ -119,16 +107,15 @@ def detail(request: Request, item_code: int):
 
             # Update yesterday data
             if date_list[0].date() == (now - timedelta(days=1)).date():
-                print(f'update yesterday data: {datetime.now()}')
                 for index in range(len(grouped_data[date_list[0]])):
                     update_data = MarketDataUpdate(**jsonable_encoder(grouped_data[date_list[0]][index]))
                     update_data.price = price_data[index][0]
                     update.append(update_data)
                     data.remove(grouped_data[date_list[0]][index])
                     price_data[index] = price_data[index][1:]
+
             # Fill non-existent price data
             if date_list[-1].date() < (now_date - timedelta(days=89)).date():
-                print(f'start fill non-existent data: {datetime.now()}')
                 date_without_time = list(map(lambda x: x.date(), date_list))
                 for day in range(len(price_data[0])):
                     if (now_date - timedelta(days=day + 1)).date() not in date_without_time:
@@ -138,11 +125,9 @@ def detail(request: Request, item_code: int):
                                 MarketDataCreate(item_num=item.item_num, enhancement_level=item.enhancement_level,
                                                  price=price_data[index][day], cumulative_volume=0,
                                                  current_stock=0, date=now_date - timedelta(days=day + 1)))
-                print(f'finish fill non-existent data: {datetime.now()}')
 
         # Update today data
         elif date_list[0] < now - timedelta(minutes=15):
-            print(f'check today data: {datetime.now()}')
             if len(grouped_data[date_list[0]]) == 1:
                 realtime_data = trade_market_provider.search_list(item_list=[item_code])
             else:
@@ -153,42 +138,18 @@ def detail(request: Request, item_code: int):
                 update.append(update_data)
                 data.remove(grouped_data[date_list[0]][index])
             # del date_list[0]
-            print(f'finish check today data: {datetime.now()}')
 
         # Create and update to DB
         if create:
-            print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
-            # result = result + create
-            print(f'finish create: {datetime.now()}')
         if update:
-            print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
-            # result = result + update
-            print(f'finish update: {datetime.now()}')
 
-        # print(f'start combine lists: {datetime.now()}')
         data = list(map(market_data_to_market_data_response, data)) + create + update
-        # print(f'finish combine lists: {datetime.now()}')
-        # print(f'start sort lists: {datetime.now()}')
         data.sort(key=lambda x: x.enhancement_level)
-    print(f'start combine lists: {datetime.now()}')
-    # result = result + data
-    '''
-    for item in data:
-        result.append(MarketDataResponse(
-            item_num=item.item_num,
-            enhancement_level=item.enhancement_level,
-            price=item.price,
-            cumulative_volume=item.cumulative_volume,
-            current_stock=item.current_stock,
-            date=item.date,
-        ))
-        '''
-    # print(jsonable_encoder(data))
-    print(f'finish all process: {datetime.now()}')
+
     return data
 
 
@@ -228,7 +189,7 @@ def market_data_model_to_schema(data):
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
-def get_latest(request: Request, target_list: list[str] = Query(None), db: Session = Depends(get_db)):
+def get_latest(request: Request, target_list: list[str] = Query(None)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -240,7 +201,7 @@ def get_latest(request: Request, target_list: list[str] = Query(None), db: Sessi
     # Check empty list and max length
     if target_list is None or target_list == [] or len(target_list) > 40:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
-    db = db
+    db = request.state.db
     target = []
     item_num_list = []
     # Parameter formatting (str -> dict)
