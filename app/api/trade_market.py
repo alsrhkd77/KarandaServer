@@ -29,9 +29,9 @@ wait_item_list = []
 강화레벨이 0이 아닌것들은 무조건 한번에 업데이트
 '''
 
+
 # TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
-'''
 async def check_wait_list() -> None:
     global wait_list_last_update, wait_item_list
     if wait_list_last_update is None or wait_list_last_update < datetime.now() - timedelta(seconds=90):
@@ -58,7 +58,6 @@ async def wait_list(websocket: WebSocket):
     except WebSocketDisconnect:
         trade_market_websocket_manager.disconnect(websocket)
     return
-'''
 
 
 @router.get('/get/detail/{item_code}', response_model=List[MarketDataResponse],
@@ -72,7 +71,7 @@ def detail(request: Request, item_code: int):
 
     create = []
     update = []
-    result: list = []
+    # result: list = []
 
     print(f'finish init: {datetime.now()}')
     # Initialize if no data exists
@@ -161,13 +160,13 @@ def detail(request: Request, item_code: int):
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
-            #result = result + create
+            # result = result + create
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
             update = list(map(market_data_to_market_data_response, update))
-            #result = result + update
+            # result = result + update
             print(f'finish update: {datetime.now()}')
 
         # print(f'start combine lists: {datetime.now()}')
@@ -188,7 +187,7 @@ def detail(request: Request, item_code: int):
             date=item.date,
         ))
         '''
-    #print(jsonable_encoder(data))
+    # print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
     return data
 
