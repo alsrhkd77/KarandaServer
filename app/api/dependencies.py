@@ -18,7 +18,7 @@ def get_db() -> Generator:
         db.close()
 
 
-async def get_uuid_from_token(request: Request) -> Optional[str]:
+def get_uuid_from_token(request: Request) -> Optional[str]:
     if request.cookies.keys():
         print(request.cookies.keys())
     if 'authorization' in request.headers.keys():
@@ -37,7 +37,7 @@ async def get_uuid_from_token(request: Request) -> Optional[str]:
     return payload.user_uuid
 
 
-async def get_token_from_websocket(
+def get_token_from_websocket(
         websocket: WebSocket,
         session: Annotated[str | None, Cookie()] = None,
         token: Annotated[str | None, Query()] = None,

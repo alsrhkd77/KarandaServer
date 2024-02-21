@@ -64,6 +64,7 @@ async def wait_list(websocket: WebSocket):
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
 async def detail(request: Request, item_code: int):
+    print("start")
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -152,7 +153,7 @@ async def detail(request: Request, item_code: int):
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
         data.sort(key=lambda x: x.enhancement_level)
-
+    print("finish")
     return data
 
 
