@@ -176,7 +176,7 @@ def detail(request: Request, item_code: int):
         # print(f'start sort lists: {datetime.now()}')
         # data.sort(key=lambda x: x.enhancement_level)
     # result = result + data
-    #print(jsonable_encoder(data))
+    # print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
     return data
 
@@ -202,9 +202,6 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
-    print(**jsonable_encoder(data))
-    return MarketDataResponse()
-    '''
     return MarketDataResponse(
         item_num=data.item_num,
         enhancement_level=data.enhancement_level,
@@ -213,7 +210,6 @@ def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate
         current_stock=data.current_stock,
         date=data.date,
     )
-    '''
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
