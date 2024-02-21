@@ -161,21 +161,21 @@ def detail(request: Request, item_code: int):
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
-            #result = result + create
+            # result = result + create
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
-            update = list(map(market_data_to_market_data_response, update))\
-            #result = result + update
+            update = list(map(market_data_to_market_data_response, update)) \
+                # result = result + update
             print(f'finish update: {datetime.now()}')
 
         print(f'start combine lists: {datetime.now()}')
         data = list(map(market_data_to_market_data_response, data)) + create + update
         print(f'finish combine lists: {datetime.now()}')
-        #print(f'start sort lists: {datetime.now()}')
-        #data.sort(key=lambda x: x.enhancement_level)
-    #result = result + data
+        # print(f'start sort lists: {datetime.now()}')
+        # data.sort(key=lambda x: x.enhancement_level)
+    # result = result + data
     print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
     return data
@@ -202,7 +202,14 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
-    return MarketDataResponse.from_orm(data)
+    return MarketDataResponse(
+        item_num=data.item_num,
+        enhancement_level=data.enhancement_level,
+        price=data.price,
+        cumulative_volume=data.cumulative_volume,
+        current_stock=data.current_stock,
+        date=data.date,
+    )
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
