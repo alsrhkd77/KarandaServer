@@ -20,9 +20,6 @@ class MarketDataResponse(MarketDataBase):
     current_stock: int
     date: datetime
 
-    class Config:
-        orm_mode = True
-
 
 class MarketDataCreate(MarketDataBase):
     price: int
@@ -43,9 +40,6 @@ class MarketDataUpdate(MarketDataBase):
         self.cumulative_volume = data.cumulative_volume
         self.current_stock = data.current_stock
         self.date = date
-
-    class Config:
-        orm_mode = True
 
 
 class MarketData(MarketDataBase):

@@ -122,7 +122,7 @@ def detail(request: Request, item_code: int):
             if date_list[0].date() == (now - timedelta(days=1)).date():
                 print(f'update yesterday data: {datetime.now()}')
                 for index in range(len(grouped_data[date_list[0]])):
-                    update_data = MarketDataUpdate.from_orm(grouped_data[date_list[0]][index])
+                    update_data = MarketDataUpdate(**jsonable_encoder(grouped_data[date_list[0]][index]))
                     update_data.price = price_data[index][0]
                     update.append(update_data)
                     data.remove(grouped_data[date_list[0]][index])
@@ -149,7 +149,7 @@ def detail(request: Request, item_code: int):
             else:
                 realtime_data = trade_market_provider.sub_list(main_key=item_code)
             for index in range(len(realtime_data)):
-                update_data = MarketDataUpdate.from_orm(grouped_data[date_list[0]][index])
+                update_data = MarketDataUpdate(**jsonable_encoder(grouped_data[date_list[0]][index]))
                 update_data.update(data=realtime_data[index], date=now)
                 update.append(update_data)
                 data.remove(grouped_data[date_list[0]][index])
@@ -202,6 +202,8 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
+    return MarketDataResponse(**jsonable_encoder(data))
+    '''
     return MarketDataResponse(
         item_num=data.item_num,
         enhancement_level=data.enhancement_level,
@@ -210,6 +212,7 @@ def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate
         current_stock=data.current_stock,
         date=data.date,
     )
+    '''
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse], dependencies=[Depends(get_uuid_from_token)])
@@ -281,7 +284,7 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
     need_update_item = {}
     need_create_item = []
     for item in need_update:
-        need_update_item[(int(item.item_num), int(item.enhancement_level))] = MarketDataUpdate.from_orm(item)
+        need_update_item[(int(item.item_num), int(item.enhancement_level))] = MarketDataUpdate(**jsonable_encoder(item))
     search_list = [i.item_num for i in need_update]
     search_list = search_list + need_create
     search_list = list(set(search_list))
