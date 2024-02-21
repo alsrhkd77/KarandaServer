@@ -202,7 +202,8 @@ def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime)
 
 
 def market_data_to_market_data_response(data: Union[MarketData, MarketDataCreate, MarketDataUpdate]):
-    return MarketDataResponse(**jsonable_encoder(data))
+    print(**jsonable_encoder(data))
+    return MarketDataResponse()
     '''
     return MarketDataResponse(
         item_num=data.item_num,
