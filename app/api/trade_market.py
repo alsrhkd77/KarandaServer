@@ -176,7 +176,7 @@ def detail(request: Request, item_code: int):
         # print(f'start sort lists: {datetime.now()}')
         # data.sort(key=lambda x: x.enhancement_level)
     # result = result + data
-    print(jsonable_encoder(data))
+    #print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
     return data
 
