@@ -170,8 +170,8 @@ def detail(request: Request, item_code: int):
         print(f'start combine lists: {datetime.now()}')
         #data = list(map(market_data_to_market_data_response, data)) + create + update
         data = data + create + update
-        print(f'start sort lists: {datetime.now()}')
-        data.sort(key=lambda x: x.enhancement_level)
+        #print(f'start sort lists: {datetime.now()}')
+        #data.sort(key=lambda x: x.enhancement_level)
     print(f'finish all process: {datetime.now()}')
     print(jsonable_encoder(data))
     return data
