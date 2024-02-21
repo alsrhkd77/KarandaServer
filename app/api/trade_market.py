@@ -29,7 +29,6 @@ wait_item_list = []
 강화레벨이 0이 아닌것들은 무조건 한번에 업데이트
 '''
 
-
 # TODO: 웹소켓 열어둔 클라이언트에서는 응답 지연 문제 있음
 
 '''
@@ -61,10 +60,11 @@ async def wait_list(websocket: WebSocket):
     return
 '''
 
+
 @router.get('/get/detail/{item_code}', response_model=list[MarketDataResponse],
             dependencies=[Depends(get_uuid_from_token)])
-async def detail(request: Request, item_code: int):
-    print("start")
+def detail(request: Request, item_code: int):
+    print(datetime.now())
     db = request.state.db
     data = crud_market_data.get_all_by_item_num(db=db, item_num=item_code)
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -153,7 +153,7 @@ async def detail(request: Request, item_code: int):
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
         data.sort(key=lambda x: x.enhancement_level)
-    print("finish")
+    print(datetime.now())
     return data
 
 
