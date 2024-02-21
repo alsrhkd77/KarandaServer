@@ -153,6 +153,7 @@ def detail(request: Request, item_code: int):
                 update.append(update_data)
                 data.remove(grouped_data[date_list[0]][index])
             # del date_list[0]
+            print(f'finish check today data: {datetime.now()}')
 
         # Create and update to DB
         if create:
@@ -166,7 +167,9 @@ def detail(request: Request, item_code: int):
             update = list(map(market_data_to_market_data_response, update))
             print(f'finish update: {datetime.now()}')
 
+        print(f'start combine lists: {datetime.now()}')
         data = list(map(market_data_to_market_data_response, data)) + create + update
+        print(f'start sort lists: {datetime.now()}')
         data.sort(key=lambda x: x.enhancement_level)
     print(f'finish all process: {datetime.now()}')
     return data
