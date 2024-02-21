@@ -13,9 +13,8 @@ from starlette import status
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.api.dependencies import get_uuid_from_token, get_db, get_token_from_websocket
-from app.models import MarketData
 from app.schemas.bdo_item import BdoItem
-from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse
+from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
@@ -162,24 +161,34 @@ def detail(request: Request, item_code: int):
             print(f'start create: {datetime.now()}')
             crud_market_data.create_from_list(db=db, data=create)
             create = list(map(market_data_to_market_data_response, create))
-            # result = result + create
+            result = result + create
             print(f'finish create: {datetime.now()}')
         if update:
             print(f'start update: {datetime.now()}')
             crud_market_data.update_from_list(db=db, data=update)
-            update = list(map(market_data_to_market_data_response, update)) \
-                # result = result + update
+            update = list(map(market_data_to_market_data_response, update))
+            result = result + update
             print(f'finish update: {datetime.now()}')
 
-        print(f'start combine lists: {datetime.now()}')
-        data = list(map(market_data_to_market_data_response, data)) + create + update
-        print(f'finish combine lists: {datetime.now()}')
+        # print(f'start combine lists: {datetime.now()}')
+        # data = list(map(market_data_to_market_data_response, data)) + create + update
+        # print(f'finish combine lists: {datetime.now()}')
         # print(f'start sort lists: {datetime.now()}')
         # data.sort(key=lambda x: x.enhancement_level)
+    print(f'start combine lists: {datetime.now()}')
     # result = result + data
+    for item in data:
+        result.append(MarketDataResponse(
+            item_num=item.item_num,
+            enhancement_level=item.enhancement_level,
+            price=item.price,
+            cumulative_volume=item.cumulative_volume,
+            current_stock=item.current_stock,
+            date=item.date,
+        ))
     # print(jsonable_encoder(data))
     print(f'finish all process: {datetime.now()}')
-    return data
+    return result
 
 
 def initialize_price_data(item_info: BdoItem, now: datetime, now_date: datetime):
