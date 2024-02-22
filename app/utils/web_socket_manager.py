@@ -24,3 +24,4 @@ class WebSocketManager:
 
 
 trade_market_websocket_manager = WebSocketManager()
+maretta_websocket_manager = WebSocketManager()

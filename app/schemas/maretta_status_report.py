@@ -18,6 +18,12 @@ class MarettaStatusReportUpdate(MarettaStatusReportBase):
     pass
 
 
+class MarettaStatusReportResponse(MarettaStatusReportBase):
+    id: int
+    reporter_discord_id: str
+    reporter_name: str
+
+
 class MarettaStatusReport(MarettaStatusReportBase):
     id: int
     reporter_id: int

@@ -40,6 +40,7 @@ app.include_router(trade_market_router)
 async def root():
     return "Welcome to Karanda"
 
+
 """
 응답 헤더에 서버 처리 소요 시간을 추가하는 미들웨어
 '''python
@@ -57,6 +58,8 @@ async def add_process_time_header(request: Request, call_next):
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
     response = Response("Internal server error", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if request.method == "POST" or request.method == "OPTIONS":
+        print(f'method: {request.method}, base: {request.base_url}')
     try:
         request.state.db = SessionLocal()
         response = await call_next(request)
