@@ -250,6 +250,7 @@ def get_latest(request: Request, target_list: list[str] = Query(None)):
     for (item_num, enhancement_level), value in itertools.groupby(db_data, lambda x: (x.item_num, x.enhancement_level)):
         if (int(item_num), int(enhancement_level)) in target:
             result = result + list(value)
+    result = list(map(market_data_to_market_data_response, result))
     return result
 
 

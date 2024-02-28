@@ -58,8 +58,6 @@ async def add_process_time_header(request: Request, call_next):
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
     response = Response("Internal server error", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    if request.method == "POST" or request.method == "OPTIONS":
-        print(f'method: {request.method}, base: {request.base_url}')
     try:
         request.state.db = SessionLocal()
         response = await call_next(request)
