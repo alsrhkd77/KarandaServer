@@ -53,15 +53,16 @@ async def reports_websocket_endpoint(websocket: WebSocket,
 
 
 @router.get('/get/reports')
-async def get_reports(request: Request, background_tasks: BackgroundTasks):
+async def get_reports(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     global listen
     if not listen:
         background_tasks.add_task(broadcast_maretta_status_report)
         listen = True
-    db = request.state.db
+    db = db
     data = crud_maretta_status_report.get_all(db=db)
     if data is None:
         return Response(status_code=status.HTTP_200_OK)
+    print(data)
     return data
 
 
