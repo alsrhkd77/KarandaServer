@@ -60,7 +60,6 @@ async def get_reports(background_tasks: BackgroundTasks, db: Session = Depends(g
         listen = True
     db = db
     data = crud_maretta_status_report.get_all(db=db)
-    print(data)
     if data is None:
         return Response(status_code=status.HTTP_200_OK)
     return data

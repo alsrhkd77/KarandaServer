@@ -21,7 +21,7 @@ class CRUDMarettaStatusReport(CRUDBase[MarettaStatusReport, MarettaStatusReportC
         return MarettaStatusReportResponse(**schema.MarettaStatusReport.from_orm(db_item).dict())
 
     def get_all(self, db: Session) -> List[MarettaStatusReportResponse]:
-        last_two_hour = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(
+        last_two_hour = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9))) - datetime.timedelta(
             hours=2)
         return db.query(MarettaStatusReport).filter(MarettaStatusReport.report_at > last_two_hour).all()
 

@@ -28,6 +28,7 @@ class FirestoreProvider:
         return data
 
     def update_maretta_status(self, data: MarettaStatusReportResponse):
+        data.report_at = data.report_at.replace(tzinfo=None)
         ref = self.db.collection(u'synchronize-data').document(u'maretta-status')
         ref.update(data.dict())
 
