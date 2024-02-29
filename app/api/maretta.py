@@ -32,7 +32,9 @@ firestore_provider.watch_maretta_status(watch_maretta_status_report)
 
 async def broadcast_maretta_status_report():
     global reports
+    print("run background")
     while True:
+        print("run loop")
         if reports:
             await maretta_websocket_manager.broadcast(json.dumps(jsonable_encoder(reports)))
             reports.clear()
