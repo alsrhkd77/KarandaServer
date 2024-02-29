@@ -24,6 +24,7 @@ def watch_maretta_status_report(doc_snapshot, changes, read_time):
     global reports
     for doc in doc_snapshot:
         data = MarettaStatusReportResponse(**doc.to_dict())
+        data.report_at = data.report_at.replace(tzinfo=None)
         reports.append(data)
 
 
