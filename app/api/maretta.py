@@ -32,13 +32,11 @@ firestore_provider.watch_maretta_status(watch_maretta_status_report)
 
 async def broadcast_maretta_status_report():
     global reports
-    print("run background")
     while True:
-        print("run loop")
         if reports:
             await maretta_websocket_manager.broadcast(json.dumps(jsonable_encoder(reports)))
             reports.clear()
-        await asyncio.sleep(3)
+        await asyncio.sleep(2)
 
 
 @router.websocket('/reports')
@@ -49,9 +47,7 @@ async def reports_websocket_endpoint(websocket: WebSocket,
     await websocket.send_text(json.dumps(jsonable_encoder(data)))
     try:
         while True:
-            data = await websocket.receive_text()
-            # if data == 'update':
-            # await sync_maretta_report(db=db)
+            await websocket.receive_text()
     except WebSocketDisconnect:
         maretta_websocket_manager.disconnect(websocket=websocket)
 

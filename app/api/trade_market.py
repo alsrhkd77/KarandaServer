@@ -199,7 +199,7 @@ def get_latest(request: Request, target_list: list[str] = Query(None)):
     - **target_list**: 리스트 내 아이템은 "item code_enhancement level" 형식으로 구성해야 함
     """
     # Check empty list and max length
-    if target_list is None or target_list == [] or len(target_list) > 40:
+    if target_list is None or target_list == [] or len(target_list) > 60:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
     db = request.state.db
     target = []
