@@ -7,6 +7,7 @@ from app.crud.base import CRUDBase
 from app.models.maretta_status_report import MarettaStatusReport
 from app.schemas.maretta_status_report import MarettaStatusReportCreate, MarettaStatusReportUpdate, \
     MarettaStatusReportResponse
+from app.schemas import maretta_status_report as schema
 
 
 class CRUDMarettaStatusReport(CRUDBase[MarettaStatusReport, MarettaStatusReportCreate, MarettaStatusReportUpdate]):
@@ -17,10 +18,10 @@ class CRUDMarettaStatusReport(CRUDBase[MarettaStatusReport, MarettaStatusReportC
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
-        return db_item
+        return MarettaStatusReportResponse(**schema.MarettaStatusReport.from_orm(db_item).dict())
 
     def get_all(self, db: Session) -> List[MarettaStatusReportResponse]:
-        last_two_hour = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9))) - datetime.timedelta(
+        last_two_hour = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(
             hours=2)
         return db.query(MarettaStatusReport).filter(MarettaStatusReport.report_at > last_two_hour).all()
 

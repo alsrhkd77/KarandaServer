@@ -1,5 +1,7 @@
 from firebase_admin import firestore
 
+from app.schemas.maretta_status_report import MarettaStatusReportResponse
+
 
 class FirestoreProvider:
     def __init__(self):
@@ -24,6 +26,14 @@ class FirestoreProvider:
         ref = self.db.collection(u'defaultData').document(u'trade-market').get()
         data = ref.to_dict()
         return data
+
+    def update_maretta_status(self, data: MarettaStatusReportResponse):
+        ref = self.db.collection(u'synchronize-data').document(u'maretta-status')
+        ref.update(data.dict())
+
+    def watch_maretta_status(self, callback):
+        ref = self.db.collection(u'synchronize-data').document(u'maretta-status')
+        doc_watch = ref.on_snapshot(callback)
 
 
 firestore_provider = FirestoreProvider()
