@@ -53,7 +53,7 @@ async def reports_websocket_endpoint(websocket: WebSocket,
 
 
 @router.get('/get/reports')
-def get_reports(request: Request, background_tasks: BackgroundTasks):
+async def get_reports(request: Request, background_tasks: BackgroundTasks):
     global listen
     if not listen:
         background_tasks.add_task(broadcast_maretta_status_report)
