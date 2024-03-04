@@ -37,7 +37,7 @@ async def broadcast_maretta_status_report():
         if reports:
             await maretta_websocket_manager.broadcast(json.dumps(jsonable_encoder(reports)))
             reports.clear()
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
 
 
 @router.websocket('/reports')
