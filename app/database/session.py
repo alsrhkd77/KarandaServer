@@ -16,5 +16,5 @@ if settings.env == 'dev':
 else:
     engine = create_engine(
         f'{properties["connector"]}://{properties["user"]}:{properties["pwd"]}@{properties["base_url"]}/{properties["database"]}',
-        **SQLALCHEMY_ENGINE_OPTIONS, echo=True)
+        **SQLALCHEMY_ENGINE_OPTIONS)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
