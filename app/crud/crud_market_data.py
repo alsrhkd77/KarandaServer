@@ -15,7 +15,7 @@ class CRUDMarketData(CRUDBase[MarketData, MarketDataCreate, MarketDataUpdate]):
         return (db.query(MarketData)
                 .filter(MarketData.item_num.in_(item_nums))
                 .filter(func.DATE(MarketData.date) == now.date())
-                .order_by(MarketData.date.desc()).all())
+                .order_by(MarketData.item_num.desc()).all())
 
     def get_all_by_item_num(self, db: Session, item_num: int) -> Optional[List[MarketData]]:
         return db.query(MarketData).filter(MarketData.item_num == item_num).order_by(MarketData.date.desc()).all()
