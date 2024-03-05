@@ -228,7 +228,11 @@ def get_latest(request: Request, target_list: list[str] = Query(None)):
     need_update = []
     # Categorize items that need to be updated
     for key, v in itertools.groupby(db_data, key=lambda x: x.item_num):
-        item_num_list.remove(key)
+        try:
+            item_num_list.remove(key)
+        except Exception:
+            print(item_num_list)
+            print(key)
         value = list(v)
         if value[0].date < now - timedelta(minutes=15):
             need_update = need_update + value
