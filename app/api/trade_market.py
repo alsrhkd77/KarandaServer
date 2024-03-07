@@ -4,13 +4,14 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import Union, List
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from fastapi.params import Query
 from starlette import status
 
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
+from app.database.session import SessionLocal
 from app.schemas.bdo_item import BdoItem
 from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDataResponse, MarketData
 from app.trade_market_provider import trade_market_provider
@@ -189,7 +190,7 @@ def market_data_model_to_schema(data):
 
 
 @router.get('/get/latest', response_model=list[MarketDataResponse])
-def get_latest(request: Request, target_list: list[str] = Query(None)):
+def get_latest(request: Request, background_tasks: BackgroundTasks, target_list: list[str] = Query(None)):
     """
     ## Get latest data
     최신(15분 이내) 거래소 데이터를 반환\n
@@ -245,7 +246,8 @@ def get_latest(request: Request, target_list: list[str] = Query(None)):
             for item in create:
                 db_data.append(MarketDataResponse(**item.dict()))
         if update:
-            crud_market_data.update_from_list(db=db, data=update)
+            background_tasks.add_task(update_trade_market_data, data=update)
+            # crud_market_data.update_from_list(db=db, data=update)
             db_data = db_data + update
     result = []
     for (item_num, enhancement_level), value in itertools.groupby(db_data, lambda x: (x.item_num, x.enhancement_level)):
@@ -286,3 +288,8 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
             else:
                 need_update_item[(data.item_num, data.enhancement_level)].update(data=data, date=now)
     return need_create_item, need_update_item.values()
+
+
+async def update_trade_market_data(data: list[MarketDataUpdate]):
+    with SessionLocal() as db:
+        crud_market_data.update_from_list(db=db, data=data)
