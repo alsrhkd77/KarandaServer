@@ -58,7 +58,7 @@ async def wait_list(websocket: WebSocket):
 
 
 @router.get('/get/detail/{item_code}', response_model=List[MarketDataResponse])
-def detail(request: Request, item_code: int):
+def detail(request: Request, background_tasks: BackgroundTasks, item_code: int):
     db = request.state.db
     data = list(map(market_data_model_to_schema, crud_market_data.get_all_by_item_num(db=db, item_num=item_code)))
     now = (datetime.now(timezone.utc) + timedelta(hours=9)).replace(tzinfo=None)
@@ -142,10 +142,12 @@ def detail(request: Request, item_code: int):
 
         # Create and update to DB
         if create:
-            crud_market_data.create_from_list(db=db, data=create)
+            # crud_market_data.create_from_list(db=db, data=create)
+            background_tasks.add_task(create_trade_market_data, data=create)
             create = list(map(market_data_to_market_data_response, create))
         if update:
-            crud_market_data.update_from_list(db=db, data=update)
+            # crud_market_data.update_from_list(db=db, data=update)
+            background_tasks.add_task(update_trade_market_data, data=update)
             update = list(map(market_data_to_market_data_response, update))
 
         data = list(map(market_data_to_market_data_response, data)) + create + update
@@ -242,7 +244,8 @@ def get_latest(request: Request, background_tasks: BackgroundTasks, target_list:
         update = list(update)
         # Insert and update to DB
         if create:
-            crud_market_data.create_from_list(db=db, data=create)
+            background_tasks.add_task(create_trade_market_data, data=create)
+            # crud_market_data.create_from_list(db=db, data=create)
             for item in create:
                 db_data.append(MarketDataResponse(**item.dict()))
         if update:
@@ -293,3 +296,8 @@ def get_latest_from_trade_market(need_create: list, need_update: list[MarketData
 async def update_trade_market_data(data: list[MarketDataUpdate]):
     with SessionLocal() as db:
         crud_market_data.update_from_list(db=db, data=data)
+
+
+async def create_trade_market_data(data: list[MarketDataCreate]):
+    with SessionLocal() as db:
+        crud_market_data.create_from_list(db=db, data=data)
