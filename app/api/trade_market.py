@@ -17,7 +17,7 @@ from app.schemas.market_data import MarketDataCreate, MarketDataUpdate, MarketDa
 from app.trade_market_provider import trade_market_provider
 from app.crud.crud_market_data import crud_market_data
 from app.crud.crud_bdo_item import crud_bdo_item
-from app.utils.web_socket_manager import trade_market_websocket_manager
+from app.utils.websocket_manager import trade_market_websocket_manager
 
 router = APIRouter(prefix='/trade-market')
 

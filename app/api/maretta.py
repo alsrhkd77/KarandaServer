@@ -1,5 +1,6 @@
 import asyncio
 import json
+import queue
 
 from fastapi import APIRouter, Depends, Request, Response, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
@@ -12,25 +13,22 @@ from app.crud.crud_maretta_status_report import crud_maretta_status_report
 from app.crud.crud_user import crud_user
 from app.database.firestore_provider import firestore_provider
 from app.schemas.maretta_status_report import MarettaStatusReportCreate, MarettaStatusReportResponse
-from app.utils.web_socket_manager import maretta_websocket_manager
+from app.utils.websocket_manager import maretta_websocket_manager
 
-reports: list[MarettaStatusReportResponse] = []
-listen = False
+latest_report = queue.Queue()
 
 router = APIRouter(prefix='/maretta')
 
 
 def watch_maretta_status_report(doc_snapshot, changes, read_time):
-    global reports
+    global latest_report
     for doc in doc_snapshot:
         data = MarettaStatusReportResponse(**doc.to_dict())
         data.report_at = data.report_at.replace(tzinfo=None)
-        reports.append(data)
+        latest_report.put(data)
 
 
-firestore_provider.watch_maretta_status(watch_maretta_status_report)
-
-
+'''
 async def broadcast_maretta_status_report():
     global reports
     while True:
@@ -38,6 +36,7 @@ async def broadcast_maretta_status_report():
             await maretta_websocket_manager.broadcast(json.dumps(jsonable_encoder(reports)))
             reports.clear()
         await asyncio.sleep(1)
+'''
 
 
 @router.websocket('/reports')
@@ -54,11 +53,7 @@ async def reports_websocket_endpoint(websocket: WebSocket,
 
 
 @router.get('/get/reports')
-async def get_reports(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    global listen
-    if not listen:
-        background_tasks.add_task(broadcast_maretta_status_report)
-        listen = True
+async def get_reports(db: Session = Depends(get_db)):
     db = db
     data = crud_maretta_status_report.get_all(db=db)
     if data is None:

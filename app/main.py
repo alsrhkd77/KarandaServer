@@ -1,17 +1,35 @@
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette import status
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from app.api.auth import router as auth_router
 from app.api.checklist import router as checklist_router
-from app.api.maretta import router as maretta_router
+from app.api.maretta import router as maretta_router, watch_maretta_status_report
 from app.api.blacklist import router as blacklist_router
 from app.api.trade_market import router as trade_market_router
 from app.database.base_class import Base
+from app.database.firestore_provider import firestore_provider
 from app.database.session import engine, SessionLocal
+from app.utils.websocket_publisher import maretta_publisher
 
 Base.metadata.create_all(bind=engine)
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Before application starts
+    firestore_provider.watch_maretta_status(watch_maretta_status_report)
+    threading.Thread(target=maretta_publisher, daemon=True).start()
+    yield
+    # After application finished
+    firestore_provider.unsubscribe()
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "https://www.karanda.kr",
@@ -39,6 +57,14 @@ app.include_router(trade_market_router)
 @app.get("/")
 async def root():
     return "Welcome to Karanda"
+
+
+@app.websocket("/echo")
+async def echo(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        msg = await websocket.receive_text()
+        await websocket.send_text(msg)
 
 
 """
