@@ -16,13 +16,13 @@ class WebsocketManager:
         try:
             await websocket.send_text(message)
         except RuntimeError:
-            print("Error: sending to websocket")
+            print(f"Error: sending to websocket\n{RuntimeError}")
 
     async def send_json(self, json_data: str, websocket: WebSocket):
         try:
             await websocket.send_json(json_data)
         except RuntimeError:
-            print(f"Error: send json to websocket\n")
+            print(f"Error: send json to websocket\n{RuntimeError}")
 
     async def broadcast(self, message: str):
         if self.active_connections:
