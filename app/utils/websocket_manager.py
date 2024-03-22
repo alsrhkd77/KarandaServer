@@ -16,21 +16,18 @@ class WebsocketManager:
         try:
             await websocket.send_text(message)
         except RuntimeError:
-            print("Error sending to websocket")
+            print("Error: sending to websocket")
 
     async def send_json(self, json_data: str, websocket: WebSocket):
         try:
             await websocket.send_json(json_data)
         except RuntimeError:
-            print("Error sending to websocket")
+            print(f"Error: send json to websocket\n")
 
     async def broadcast(self, message: str):
         if self.active_connections:
             for connection in self.active_connections:
-                try:
-                    await connection.send_text(message)
-                except RuntimeError:
-                    print("Error sending to websocket")
+                await connection.send_text(message)
 
 
 trade_market_websocket_manager = WebsocketManager()

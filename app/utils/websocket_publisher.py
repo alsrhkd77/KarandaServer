@@ -14,6 +14,4 @@ def maretta_publisher():
     while True:
         report = latest_report.get()
         reports = [report]
-        lock.acquire()
         asyncio.run(maretta_websocket_manager.broadcast(json.dumps(jsonable_encoder(reports))))
-        lock.release()
