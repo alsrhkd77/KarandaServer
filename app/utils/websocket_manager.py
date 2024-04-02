@@ -25,9 +25,16 @@ class WebsocketManager:
             print(f"Error: send json to websocket\n{RuntimeError}")
 
     async def broadcast(self, message: str):
+        disconnected = []
         if self.active_connections:
             for connection in self.active_connections:
-                await connection.send_text(message)
+                try:
+                    await connection.send_text(message)
+                except RuntimeError:
+                    print(f"Error: sending to websocket\n{RuntimeError}")
+                    disconnected.append(connection)
+        for connection in disconnected:
+            self.disconnect(connection)
 
 
 trade_market_websocket_manager = WebsocketManager()
