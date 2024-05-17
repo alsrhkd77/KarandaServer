@@ -72,5 +72,5 @@ async def report_status(item_data: MarettaStatusReportCreate, request: Request,
         return Response(status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
     firestore_provider.update_maretta_status(data=data)
     # await add_maretta_report(report=data, db=db)
-    # return Response(status_code=status.HTTP_200_OK)   # Swap in next version
-    return data
+    return Response(status_code=status.HTTP_200_OK)   # Swap in next version
+    #return data
