@@ -7,5 +7,6 @@ import org.springframework.boot.runApplication
 class KarandaServerApplication
 
 fun main(args: Array<String>) {
+
     runApplication<KarandaServerApplication>(*args)
 }
