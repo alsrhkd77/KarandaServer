@@ -1,10 +1,56 @@
 spring:
   application:
-    name: KarandaServer
+    name: "KarandaServer"
+  profiles:
+    active: "production"
 
-# Set utf-8
+# Open API Swagger
+springdoc:
+  swagger-ui:
+    path: /docs
+    disable-swagger-default-url: true
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
 server:
   servlet:
+    # Set utf-8
     encoding:
       charset: utf-8
       force: true
+
+---
+# Production profile
+spring:
+  config:
+    activate:
+      on-profile: "production"
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://"${db:localhost:3306}"/"${database:dev}"
+    username: "${username:user}"
+    password: "${pwd:1234}"
+  jpa:
+    hibernate:
+      ddl-auto: validate
+server:
+  port: 8080
+
+---
+# Develop profile
+spring:
+  config:
+    activate:
+      on-profile: "develop"
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:file:./localDB/dev
+    username: user
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: update
+server:
+  port: 8000
