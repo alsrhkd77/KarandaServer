@@ -29,7 +29,6 @@ class FirebaseConfigurationForProd {
 
     @PostConstruct
     fun initializeFirebase() {
-        print("run production")
         FirebaseApp.initializeApp()
     }
 }

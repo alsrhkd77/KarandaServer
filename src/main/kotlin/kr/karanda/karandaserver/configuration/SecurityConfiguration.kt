@@ -1,18 +1,22 @@
 package kr.karanda.karandaserver.configuration
 
+import kr.karanda.karandaserver.filter.AuthorizationFilter
+import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration {
+class SecurityConfiguration(val tokenFactory: TokenFactory) {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
@@ -34,16 +38,36 @@ class SecurityConfiguration {
 
     @Bean
     fun formLoginFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http.invoke {
+        http {
             cors {
                 configurationSource = corsConfigurationSource()
             }
+            csrf {
+                disable()
+            }
             formLogin {
                 disable()
+            }
+            sessionManagement {
+                sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
         }
         return http.build()
     }
 
+    @Bean
+    fun authorizationFilterChain(http: HttpSecurity): SecurityFilterChain {
+        http {
+            addFilterBefore<UsernamePasswordAuthenticationFilter>(AuthorizationFilter(tokenFactory))
+            authorizeRequests {
+                authorize("/docs", permitAll)
+                authorize("/swagger-ui/*", permitAll)
+                authorize("/auth/*", permitAll)
+                authorize("/chzzk/*", permitAll)
+                authorize(anyRequest, authenticated)
+            }
+        }
+        return http.build()
+    }
 
 }

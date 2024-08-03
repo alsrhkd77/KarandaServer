@@ -54,3 +54,11 @@ spring:
       ddl-auto: update
 server:
   port: 8000
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql: trace
