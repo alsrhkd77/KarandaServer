@@ -6,8 +6,10 @@ import com.google.firebase.cloud.FirestoreClient
 import kr.karanda.karandaserver.data.DiscordProperties
 import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.TradeMarketProperties
+import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Service
 
+@DependsOn("FirebaseConfiguration")
 @Service
 class DefaultDataService {
     private val db: Firestore = FirestoreClient.getFirestore()

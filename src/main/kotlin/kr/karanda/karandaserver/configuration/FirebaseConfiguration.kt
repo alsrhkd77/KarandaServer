@@ -10,7 +10,7 @@ import java.io.FileInputStream
 import javax.annotation.PostConstruct
 
 @Profile("develop")
-@Configuration
+@Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForDev {
 
     @PostConstruct
@@ -19,12 +19,14 @@ class FirebaseConfigurationForDev {
         val options: FirebaseOptions = FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(token))
             .build()
-        FirebaseApp.initializeApp(options)
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp(options)
+        }
     }
 }
 
 @Profile("production")
-@Configuration
+@Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForProd {
 
     @PostConstruct

@@ -30,7 +30,7 @@ class SecurityConfiguration(val tokenFactory: TokenFactory) {
         )
         configuration.allowedMethods = listOf("*")
         configuration.allowedHeaders = listOf("*")
-        //configuration.allowCredentials = true
+        configuration.allowCredentials = true
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source

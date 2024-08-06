@@ -26,9 +26,8 @@ class DiscordAuthController(
     val tokenFactory: TokenFactory,
     val discordService: DiscordService,
     val userService: UserService,
-    val environment: Environment
+    val environment: Environment,
 ) {
-
     private fun authenticate(code: String, redirectURL: String): Tokens {
         val discordToken = discordService.exchangeCode(code = code, redirectUrl = redirectURL)
         val discordUser = discordService.getUserDataByToken(discordToken)
@@ -59,7 +58,7 @@ class DiscordAuthController(
 
     @GetMapping("/refresh")
     @PreAuthorize("isAuthenticated()")
-    fun refreshAccessToken() : AuthorizationResponse {
+    fun refreshAccessToken(): AuthorizationResponse {
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
         return authorizationByAuthentication(authentication, withRefreshToken = true)
     }
@@ -75,18 +74,18 @@ class DiscordAuthController(
         val response = AuthorizationResponse()
         val user = userService.getUserEntityByUUID(authentication.userUUID)
         val userData = discordService.getUserDataById(user.discordId).apply {
-            if(this.avatar != null){
+            if (this.avatar != null) {
                 response.avatar = "${this.id}/${this.avatar}.png"
             }
             response.username = this.username
             response.discordId = this.id
         }
-        if(userData.username != authentication.username) {
+        if (userData.username != authentication.username) {
             user.userName = userData.username
             userService.updateUserFromEntity(user)
             tokenFactory.createTokens(userUUID = user.userUUID, username = userData.username).apply {
                 response.token = this.accessToken
-                if(withRefreshToken) {
+                if (withRefreshToken) {
                     response.refreshToken = this.refreshToken
                 }
             }

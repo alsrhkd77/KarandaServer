@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.security.MalformedKeyException
 import io.jsonwebtoken.security.SecurityException
+import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.Tokens
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.service.DefaultDataService
@@ -18,7 +19,8 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 class TokenFactory(defaultDataService: DefaultDataService) {
-    val tokenProperties = defaultDataService.getTokenProperties()
+
+    private final val tokenProperties: TokenProperties = defaultDataService.getTokenProperties()
 
     fun createTokens(userUUID: String, username: String): Tokens {
         return Tokens(createAccessToken(userUUID, username), createRefreshToken(username, username))
@@ -33,6 +35,18 @@ class TokenFactory(defaultDataService: DefaultDataService) {
             .issuer("https://api.karanda.kr/authentication")
             .claims(claims)
             .signWith(SecretKeySpec(tokenProperties.secretKey.toByteArray(), tokenProperties.algorithm))
+            .expiration(Date.from(now.toInstant()))
+            .compact()
+    }
+
+    fun createQualificationToken(): String {
+        val claims = mutableMapOf("platform" to "WINDOWS")
+        val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(10)
+
+        return Jwts.builder()
+            .issuer("https://api.karanda.kr/client")
+            .claims(claims)
+            .signWith(SecretKeySpec(tokenProperties.platformKey.toByteArray(), tokenProperties.algorithm))
             .expiration(Date.from(now.toInstant()))
             .compact()
     }
