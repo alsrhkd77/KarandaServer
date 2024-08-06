@@ -3,13 +3,14 @@ package kr.karanda.karandaserver.filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-class QualificationFilter: OncePerRequestFilter() {
+class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerRequestFilter() {
 
     val whiteList = listOf("/swagger-ui/*", "/docs")
 
@@ -18,17 +19,19 @@ class QualificationFilter: OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        //TODO: 1. check header
-        if(request.headerNames.toList().contains("Qualifications")){
-            println("Has Qualifications")
-        } else {
-            println("No Qualifications")
+        var result = false
+        if (request.headerNames.toList().contains("Qualification")) {
+            val token: String = request.getHeader("Qualification")
+            tokenFactory.validateQualificationToken(token).apply {
+                result = this
+            }
         }
-        //TODO: 2. get token from header
-        //TODO: 3. validate token
-        //response.status = HttpServletResponse.SC_UNAUTHORIZED
-        //return    //이후 로직 실행 없이 리턴
-        filterChain.doFilter(request, response)
+        if (result) {
+            filterChain.doFilter(request, response)
+        } else {
+            response.status = HttpServletResponse.SC_UNAUTHORIZED
+            return    //이후 로직 실행 없이 반환
+        }
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
@@ -39,8 +42,8 @@ class QualificationFilter: OncePerRequestFilter() {
 
         val path = request.requestURI
         val pathMatcher = AntPathMatcher()
-        for(white in whiteList) {
-            if(pathMatcher.match(white, path)){
+        for (white in whiteList) {
+            if (pathMatcher.match(white, path)) {
                 return true
             }
         }
