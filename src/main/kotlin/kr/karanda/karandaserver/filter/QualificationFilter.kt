@@ -12,16 +12,29 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerRequestFilter() {
 
-    val whiteList = listOf("/swagger-ui/*", "/docs")
+    val whiteList = listOf(
+        "/docs",
+        "/api-docs",
+        "/api-docs/*",
+        "/swagger-ui/*",
+        "/auth/discord/authenticate/*",
+        "/live-channel"
+    )
 
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        if(request.requestURI.contains("/live-data")) {
+            println(request.requestURL)
+            println(request.requestURI)
+            println(request.method)
+            println(request.headerNames.toList())
+        }
         var result = false
-        if (request.headerNames.toList().contains("Qualification")) {
-            val token: String = request.getHeader("Qualification")
+        if (request.headerNames.toList().contains("qualification")) {
+            val token: String = request.getHeader("qualification")
             tokenFactory.validateQualificationToken(token).apply {
                 result = this
             }
@@ -29,7 +42,7 @@ class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         if (result) {
             filterChain.doFilter(request, response)
         } else {
-            response.status = HttpServletResponse.SC_UNAUTHORIZED
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
             return    //이후 로직 실행 없이 반환
         }
     }

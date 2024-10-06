@@ -7,15 +7,29 @@ import jakarta.servlet.http.HttpServletResponse
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.util.matcher.RequestMatcher
+import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
+@Component
 class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerRequestFilter() {
+
+    private var whitePathMatcher: RequestMatcher? = null
+
+    fun setWhitePathMatcher(whitePathMatcher: RequestMatcher) {
+        this.whitePathMatcher = whitePathMatcher
+    }
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        val token = getToken(request.getHeader("Authorization"))
+        if(!request.headerNames.toList().contains("authorization")){
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+            return
+        }
+        val token = getToken(request.getHeader("authorization"))
         if (request.requestURI.equals("/auth/discord/refresh")) {
             val refreshToken = getToken(request.getHeader("refresh-token"))
             if (token != null && refreshToken != null && tokenFactory.validateRefreshToken(refreshToken)) {
@@ -29,11 +43,16 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
                 } catch (e: Exception) {
                     //잘못된 토큰
                     print(e)
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                    return
                 }
 
                 val authentication = tokenFactory.getAuthenticationFromRefreshToken(refreshToken)
                 if (uuid != null && (authentication.principal as User).userUUID == uuid) {
                     SecurityContextHolder.getContext().authentication = authentication
+                } else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                    return
                 }
             }
         } else {
@@ -41,9 +60,18 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
                 tokenFactory.getAuthentication(token).let {
                     SecurityContextHolder.getContext().authentication = it
                 }
+            } else {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                return
             }
         }
         filterChain.doFilter(request, response)
+    }
+
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        if (request.method == "OPTIONS") return true
+        if (whitePathMatcher != null && whitePathMatcher!!.matches(request)) return true
+        return false
     }
 
     private fun getToken(value: String): String? {

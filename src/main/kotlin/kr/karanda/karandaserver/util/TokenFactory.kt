@@ -8,7 +8,7 @@ import io.jsonwebtoken.security.SecurityException
 import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.Tokens
 import kr.karanda.karandaserver.dto.User
-import kr.karanda.karandaserver.service.DefaultDataService
+import kr.karanda.karandaserver.service.FireStoreService
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
@@ -18,9 +18,9 @@ import java.util.Date
 import javax.crypto.spec.SecretKeySpec
 
 @Component
-class TokenFactory(defaultDataService: DefaultDataService) {
+class TokenFactory(fireStoreService: FireStoreService) {
 
-    private final val tokenProperties: TokenProperties = defaultDataService.getTokenProperties()
+    private val tokenProperties: TokenProperties = fireStoreService.getTokenProperties()
 
     fun createTokens(userUUID: String, username: String): Tokens {
         return Tokens(createAccessToken(userUUID, username), createRefreshToken(username, username))
@@ -89,20 +89,32 @@ class TokenFactory(defaultDataService: DefaultDataService) {
         return validateToken(token, SecretKeySpec(tokenProperties.platformKey.toByteArray(), tokenProperties.algorithm))
     }
 
-    private fun validateToken(token: String, key:SecretKeySpec): Boolean {
+    private fun validateToken(token: String, key: SecretKeySpec): Boolean {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token)
             return true
         } catch (e: SecurityException) {
-            println("Invalid token")
+            println("Invalid token\n${e.message}")
         } catch (e: MalformedKeyException) {
-            println("Invalid token")
+            println(
+                "Invalid token\n" +
+                        "${e.message}"
+            )
         } catch (e: ExpiredJwtException) {
-            println("Expired token")
+            println(
+                "Expired token\n" +
+                        "${e.message}"
+            )
         } catch (e: UnsupportedJwtException) {
-            println("Unsupported Jwt token")
+            println(
+                "Unsupported Jwt token\n" +
+                        "${e.message}"
+            )
         } catch (e: IllegalArgumentException) {
-            println("Invalid token")
+            println(
+                "Invalid token\n" +
+                        "${e.message}"
+            )
         }
         return false
     }

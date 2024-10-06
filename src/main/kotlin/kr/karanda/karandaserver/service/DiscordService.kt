@@ -8,15 +8,14 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.web.client.RestClient
-import org.springframework.web.reactive.function.BodyInserters
 
 @Service
-class DiscordService(defaultDataService: DefaultDataService) {
+class DiscordService(fireStoreService: FireStoreService) {
 
-    private final val properties: DiscordProperties = defaultDataService.getDiscordProperties()
+    private val properties: DiscordProperties = fireStoreService.getDiscordProperties()
+    val client = RestClient.create(properties.api)
 
     fun exchangeCode(code: String, redirectUrl: String): String {
-        val client = RestClient.create(properties.api)
         val data = mapOf(
             "client_id" to listOf(properties.clientId),
             "client_secret" to listOf(properties.clientSecret),
@@ -29,14 +28,14 @@ class DiscordService(defaultDataService: DefaultDataService) {
         val response = client.post()
             .uri("/oauth2/token")
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-            .body(BodyInserters.fromFormData(CollectionUtils.toMultiValueMap(data)))
+            //.body(BodyInserters.fromFormData(CollectionUtils.toMultiValueMap(data)))
+            .body(CollectionUtils.toMultiValueMap(data))
             .retrieve()
             .body(DiscordExchangeCodeResponse::class.java)
         return response!!.access_token
     }
 
     fun getUserDataByToken(token: String): DiscordUserDataResponse {
-        val client = RestClient.create(properties.api)
         val response = client.get()
             .uri("/users/@me")
             .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -46,7 +45,6 @@ class DiscordService(defaultDataService: DefaultDataService) {
     }
 
     fun getUserDataById(discordId: String): DiscordUserDataResponse {
-        val client = RestClient.create(properties.api)
         val response = client.get()
             .uri("/users/$discordId")
             .header(HttpHeaders.AUTHORIZATION, "Bot ${properties.token}")

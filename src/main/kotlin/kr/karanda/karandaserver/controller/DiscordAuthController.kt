@@ -1,5 +1,6 @@
 package kr.karanda.karandaserver.controller
 
+import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.data.AuthorizationResponse
@@ -11,7 +12,6 @@ import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -39,6 +39,7 @@ class DiscordAuthController(
     }
 
     @GetMapping("/authenticate/windows")
+    @Operation(summary = "Authentication from Karanda windows client")
     fun authenticationFromWindows(code: String, request: HttpServletRequest): ModelAndView {
         val (accessToken, refreshToken) = authenticate(code, request.requestURL.toString())
         val frontUrl = "http://localhost:8082"
@@ -46,6 +47,7 @@ class DiscordAuthController(
     }
 
     @GetMapping("/authenticate/web")
+    @Operation(summary = "Authentication from Karanda web client")
     fun authenticationFromWeb(code: String, request: HttpServletRequest): ModelAndView {
         val (accessToken, refreshToken) = authenticate(code, request.requestURL.toString())
         var frontUrl = "http://localhost:2345"
@@ -56,18 +58,19 @@ class DiscordAuthController(
         return ModelAndView("redirect:$frontUrl?token=$accessToken&&refresh-token=$refreshToken")
     }
 
+    @GetMapping("/authorization")
+    @Operation(summary = "Authorization with access token")
+    fun authorization(): AuthorizationResponse {
+        println(SecurityContextHolder.getContext().authentication)
+        val authentication = SecurityContextHolder.getContext().authentication.principal as User
+        return authorizationByAuthentication(authentication, withRefreshToken = false)
+    }
+
     @GetMapping("/refresh")
-    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Exchanging old tokens for new tokens")
     fun refreshAccessToken(): AuthorizationResponse {
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
         return authorizationByAuthentication(authentication, withRefreshToken = true)
-    }
-
-    @GetMapping("/authorization")
-    @PreAuthorize("isAuthenticated()")
-    fun authorization(): AuthorizationResponse {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as User
-        return authorizationByAuthentication(authentication, withRefreshToken = false)
     }
 
     private fun authorizationByAuthentication(authentication: User, withRefreshToken: Boolean): AuthorizationResponse {
@@ -94,7 +97,6 @@ class DiscordAuthController(
     }
 
     @DeleteMapping("/unregister")
-    @PreAuthorize("isAuthenticated()")
     fun unregister(): ResponseEntity<Any> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
         userService.deleteUserByUUID(authentication.userUUID)
