@@ -13,6 +13,13 @@ class User(
     @Column(unique = true)
     var discordId: String,
     var userName: String,
+
+    @OneToOne
+    @JoinColumn(name = "main_family_id")
+    var mainFamily: BDOFamily? = null,
+
+    @OneToMany(mappedBy = "owner")
+    val bdoFamily: List<BDOFamily> = mutableListOf(),
 ) {
     fun toDTO() = UserDTO(userUUID = userUUID, username = userName)
 }

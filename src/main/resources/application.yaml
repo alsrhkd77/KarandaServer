@@ -21,6 +21,11 @@ server:
       charset: utf-8
       force: true
 
+# Karanda original
+karanda:
+  bdo:
+    class-mapping: { character_0: warrior, character_4: ranger, character_8: sorceress, character_12: berserker, character_16: tamer, character_20: musa, character_21: maehwa, character_24: valkyrie, character_25: kunoichi, character_26: ninja, character_28: wizard, character_31: witch, character_19: striker, character_23: mystic, character_11: lahn, character_29: archer, character_27: dark knight, character_17: shai, character_5: guardian, character_1: hashashin, character_9: nova, character_2: sage, character_10: corsair, character_7: drakania, character_30: woosa, character_15: maegu, character_6: scholar, character_33: dosa }
+
 ---
 # Production profile
 spring:
@@ -55,7 +60,8 @@ spring:
     password: 1234
   jpa:
     hibernate:
-      ddl-auto: validate
+      #ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:

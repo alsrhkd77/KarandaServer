@@ -22,7 +22,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
-    /*@Bean
+    @Bean
     fun marketDataUpdateTrigger(@Qualifier("marketDataUpdateJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder
             .newTrigger()
@@ -31,7 +31,7 @@ class QuartzSchedulerConfiguration {
             .startNow()
             .withSchedule(simpleSchedule().withIntervalInSeconds(10).repeatForever())
             .build()
-    }*/
+    }
 
     @Bean
     fun publishMarketWaitListJobDetail(): JobDetail {

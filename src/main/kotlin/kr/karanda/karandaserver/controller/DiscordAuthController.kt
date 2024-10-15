@@ -61,7 +61,6 @@ class DiscordAuthController(
     @GetMapping("/authorization")
     @Operation(summary = "Authorization with access token")
     fun authorization(): AuthorizationResponse {
-        println(SecurityContextHolder.getContext().authentication)
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
         return authorizationByAuthentication(authentication, withRefreshToken = false)
     }
