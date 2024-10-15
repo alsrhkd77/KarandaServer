@@ -1,6 +1,5 @@
 package kr.karanda.karandaserver.service
 
-import kr.karanda.karandaserver.dto.BDOFamily
 import kr.karanda.karandaserver.dto.User as UserDTO
 import kr.karanda.karandaserver.entity.BDOFamily as BDOFamilyEntity
 import kr.karanda.karandaserver.dto.BDOFamily as BDOFamilyDTO
