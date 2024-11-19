@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -16,8 +16,14 @@ RUN chmod +x ./gradlew
 # 애플리케이션 빌드
 RUN ./gradlew build --no-daemon  --exclude-task test
 
+# Temurin JRE 이미지를 사용하여 더 작은 이미지를 기반으로 Production 환경 설정
+FROM eclipse-temurin:21-jre
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
 # 빌드된 JAR 파일 복사
-COPY ./build/libs/*-SNAPSHOT.jar ./app.jar
+COPY --from=builder /app/build/libs/*-SNAPSHOT.jar /app/app.jar
 
 # 포트 8080 노출
 #EXPOSE 8080
