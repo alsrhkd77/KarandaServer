@@ -9,6 +9,7 @@ import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.Tokens
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.service.FireStoreService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -20,15 +21,16 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 @DependsOn("FireStoreService")
-class TokenFactory(fireStoreService: FireStoreService) {
-
-    private val tokenProperties: TokenProperties = fireStoreService.getTokenProperties()
+class TokenFactory {
+    @Autowired
+    private val fireStoreService: FireStoreService? = null
 
     fun createTokens(userUUID: String, username: String): Tokens {
         return Tokens(createAccessToken(userUUID, username), createRefreshToken(username, username))
     }
 
     private fun createAccessToken(userUUID: String, username: String): String {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val claims = mutableMapOf("username" to username)
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.expire.toLong())
 
@@ -42,6 +44,7 @@ class TokenFactory(fireStoreService: FireStoreService) {
     }
 
     fun createQualificationToken(): String {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val claims = mutableMapOf("platform" to "WINDOWS")
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(10)
 
@@ -54,6 +57,7 @@ class TokenFactory(fireStoreService: FireStoreService) {
     }
 
     private fun createRefreshToken(userUUID: String, username: String): String {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.refreshExpire.toLong())
 
         return Jwts.builder()
@@ -66,6 +70,7 @@ class TokenFactory(fireStoreService: FireStoreService) {
 
     // This function is for access token
     fun getAuthentication(token: String): Authentication {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val key = SecretKeySpec(tokenProperties.secretKey.toByteArray(), tokenProperties.algorithm)
         val payload = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
         val user = User(userUUID = payload.subject, username = payload["username"].toString())
@@ -73,6 +78,7 @@ class TokenFactory(fireStoreService: FireStoreService) {
     }
 
     fun getAuthenticationFromRefreshToken(token: String): Authentication {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val key = SecretKeySpec(tokenProperties.refreshKey.toByteArray(), tokenProperties.algorithm)
         val payload = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
         val user = User(userUUID = payload.subject, username = payload["username"].toString())
@@ -80,14 +86,17 @@ class TokenFactory(fireStoreService: FireStoreService) {
     }
 
     fun validateAccessToken(token: String): Boolean {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.secretKey.toByteArray(), tokenProperties.algorithm))
     }
 
     fun validateRefreshToken(token: String): Boolean {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.refreshKey.toByteArray(), tokenProperties.algorithm))
     }
 
     fun validateQualificationToken(token: String): Boolean {
+        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.platformKey.toByteArray(), tokenProperties.algorithm))
     }
 
