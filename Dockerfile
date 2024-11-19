@@ -9,6 +9,9 @@ COPY gradlew /app/
 COPY build.gradle.kts /app/
 COPY settings.gradle.kts /app/
 
+# Gradle Wrapper 실행 권한 부여
+RUN chmod +x ./gradlew
+
 # Gradle 의존성 다운로드
 RUN ./gradlew build --no-daemon
 
