@@ -25,12 +25,10 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        println(request.headerNames.toList())
         val headerName = request.headerNames.toList().find {
             it.equals("authorization", ignoreCase = true)
         }
         if(headerName == null) {
-            println("토큰 없음")
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
             return
         }
@@ -66,6 +64,7 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
                     SecurityContextHolder.getContext().authentication = it
                 }
             } else {
+                println("토큰 검증 실패\n ${token}")
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                 return
             }
@@ -82,8 +81,10 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
     private fun getToken(value: String): String? {
         val items = value.split(" ")
         if (items.size == 2 && items.first() == "Bearer") {
+            println("Token found")
             return items.last()
         }
+        println("Token not found")
         return null
     }
 }
