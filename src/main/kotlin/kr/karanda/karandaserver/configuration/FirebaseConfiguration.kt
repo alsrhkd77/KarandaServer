@@ -31,6 +31,11 @@ class FirebaseConfigurationForProd {
 
     @PostConstruct
     fun initializeFirebase() {
-        FirebaseApp.initializeApp()
+        try {
+            FirebaseApp.initializeApp()
+        }
+        catch (e: Exception) {
+            println(e.message)
+        }
     }
 }
