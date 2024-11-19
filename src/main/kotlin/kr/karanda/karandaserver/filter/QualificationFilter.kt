@@ -33,8 +33,11 @@ class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerReque
             println(request.headerNames.toList())
         }
         var result = false
-        if (request.headerNames.toList().contains("qualification")) {
-            val token: String = request.getHeader("qualification")
+        val headerName = request.headerNames.toList().find {
+            it.equals("qualification", ignoreCase = true)
+        }
+        if (headerName != null) {
+            val token: String = request.getHeader(headerName)
             tokenFactory.validateQualificationToken(token).apply {
                 result = this
             }

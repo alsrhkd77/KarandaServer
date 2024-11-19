@@ -17,6 +17,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew build --no-daemon  --exclude-task test
 
 # Temurin JRE 이미지를 사용하여 더 작은 이미지를 기반으로 Production 환경 설정
+# alpine쓰면 동적 링크 에러남
 FROM eclipse-temurin:21-jre
 
 # 작업 디렉토리 설정

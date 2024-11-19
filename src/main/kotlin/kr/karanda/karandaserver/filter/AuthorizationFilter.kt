@@ -25,11 +25,14 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        if(!request.headerNames.toList().contains("authorization")){
+        val headerName = request.headerNames.toList().find {
+            it.equals("authorization", ignoreCase = true)
+        }
+        if(headerName == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
             return
         }
-        val token = getToken(request.getHeader("authorization"))
+        val token = getToken(request.getHeader(headerName))
         if (request.requestURI.equals("/auth/discord/refresh")) {
             val refreshToken = getToken(request.getHeader("refresh-token"))
             if (token != null && refreshToken != null && tokenFactory.validateRefreshToken(refreshToken)) {
