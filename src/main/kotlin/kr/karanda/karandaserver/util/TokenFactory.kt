@@ -9,6 +9,7 @@ import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.Tokens
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.service.FireStoreService
+import org.springframework.context.annotation.DependsOn
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
@@ -18,6 +19,7 @@ import java.util.Date
 import javax.crypto.spec.SecretKeySpec
 
 @Component
+@DependsOn("FireStoreService")
 class TokenFactory(fireStoreService: FireStoreService) {
 
     private val tokenProperties: TokenProperties = fireStoreService.getTokenProperties()
