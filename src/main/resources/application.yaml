@@ -34,13 +34,22 @@ spring:
     password: ${DB_PW}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         jdbc:
           batch_size: 20
 server:
   port: 8080
+management:
+  server:
+    port: 1234
+  endpoints:
+    enabled-by-default: false
+    jmx:
+      exposure:
+        exclude: "*"
+
 
 ---
 # Develop profile
