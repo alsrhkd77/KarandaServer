@@ -20,7 +20,7 @@ import java.util.Date
 import javax.crypto.spec.SecretKeySpec
 
 @Component
-@DependsOn("FireStoreService")
+@DependsOn("fireStoreService")
 class TokenFactory {
     @Autowired
     private val fireStoreService: FireStoreService? = null
