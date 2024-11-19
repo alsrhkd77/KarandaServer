@@ -68,11 +68,12 @@ class WebSocketChannelInterceptor : ChannelInterceptor {
     @Autowired
     private var tokenFactory: TokenFactory? = null
 
+
+
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
-        println("intercept!!")
         val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java) ?: return null
-        println(accessor.command)
-        println(accessor.messageHeaders)
+        //println(accessor.command)
+        //println(accessor.messageHeaders)
 
         val qualification = accessor.getNativeHeader("Qualification")
         if (StompCommand.CONNECT == accessor.command) {

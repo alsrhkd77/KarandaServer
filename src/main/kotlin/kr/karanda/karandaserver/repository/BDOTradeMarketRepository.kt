@@ -16,21 +16,22 @@ import kotlin.math.min
 @Repository
 class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
     private val properties = defaultDataService.getTradeMarketProperties()
-    private val client = RestClient.create(properties.api)
-    private val marketHeaders = properties.headers
+    private val client = RestClient.builder()
+        .baseUrl(properties.api)
+        .defaultHeaders { headers ->
+            run {
+                for (header in properties.headers) {
+                    headers.add(header.key, header.value)
+                }
+            }
+        }
+        .build()
     private val keyType = properties.keyType
 
     fun getWaitList(): List<MarketWaitItem> {
         val result = mutableListOf<MarketWaitItem>()
         val response = client.post()
             .uri("/GetWorldMarketWaitList")
-            .headers { headers ->
-                run {
-                    for (header in marketHeaders) {
-                        headers.add(header.key, header.value)
-                    }
-                }
-            }
             .body(emptyMap<String, String>())
             .exchange { request, response ->
                 if (response.statusCode.is2xxSuccessful) {
@@ -54,13 +55,6 @@ class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
         )
         val response = client.post()
             .uri("/GetWorldMarketSubList")
-            .headers { headers ->
-                run {
-                    for (header in marketHeaders) {
-                        headers.add(header.key, header.value)
-                    }
-                }
-            }
             .body(payload)
             .exchange { request, response ->
                 if (response.statusCode.is2xxSuccessful) {
@@ -94,13 +88,6 @@ class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
         )
         val response = client.post()
             .uri("/GetWorldMarketSearchList")
-            .headers { headers ->
-                run {
-                    for (header in marketHeaders) {
-                        headers.add(header.key, header.value)
-                    }
-                }
-            }
             .body(payload)
             .exchange { request, response -> exchange(request, response) }
         response.toSearchListItems().let { result.addAll(it) }
@@ -116,13 +103,6 @@ class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
         )
         val response = client.post()
             .uri("/GetMarketPriceInfo")
-            .headers { headers ->
-                run {
-                    for (header in marketHeaders) {
-                        headers.add(header.key, header.value)
-                    }
-                }
-            }
             .body(payload)
             .exchange { request, response -> exchange(request, response) }
         response.toPriceInfo().let { result.addAll(it) }
@@ -165,18 +145,23 @@ private data class BDOResponse(val resultCode: Int, val resultMsg: String) {
     fun toSubListItems(): List<MarketItem> {
         val result = mutableListOf<MarketItem>()
         for (line in resultMsg.trim().split("|")) {
-            if(line.isEmpty()) continue
-            val item = line.split("-")
-            result.add(
-                MarketItem(
-                    itemNum = item[0].toInt(),
-                    enhancementLevel = item[1].toInt(),
-                    price = item[3].toLong(),
-                    currentStock = item[4].toLong(),
-                    cumulativeVolume = item[5].toLong(),
-                    date = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+            try {
+                if(line.isEmpty()) continue
+                val item = line.split("-")
+                result.add(
+                    MarketItem(
+                        itemNum = item[0].toInt(),
+                        enhancementLevel = item[1].toInt(),
+                        price = item[3].toLong(),
+                        currentStock = item[4].toLong(),
+                        cumulativeVolume = item[5].toLong(),
+                        date = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+                    )
                 )
-            )
+            } catch (e: Exception) {
+                println(e)
+                println(line)
+            }
         }
         return result
     }
