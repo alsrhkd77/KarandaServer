@@ -23,7 +23,8 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 빌드된 JAR 파일 복사
-COPY --from=builder /app/build/libs/*.jar /app/app.jar
+#COPY --from=builder /app/build/libs/*.jar /app/app.jar
+RUN cp /app/build/libs/*.jar /app/app.jar
 
 # Spring Boot 애플리케이션 실행
 CMD ["java", "-jar", "/app/app.jar"]
