@@ -4,12 +4,14 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.karanda.karandaserver.util.TokenFactory
+import org.springframework.context.annotation.DependsOn
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
+@DependsOn("TokenFactory")
 class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerRequestFilter() {
 
     val whiteList = listOf(
