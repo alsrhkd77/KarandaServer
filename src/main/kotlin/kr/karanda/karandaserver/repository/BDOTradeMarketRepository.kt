@@ -4,6 +4,7 @@ import kr.karanda.karandaserver.data.MarketWaitItem
 import kr.karanda.karandaserver.data.MarketItem
 import kr.karanda.karandaserver.exception.BDOApiNotAvailable
 import kr.karanda.karandaserver.service.FireStoreService
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.http.HttpRequest
 import org.springframework.stereotype.Repository
@@ -16,8 +17,11 @@ import kotlin.math.min
 
 @Repository("BDOTradeMarketRepository")
 @DependsOn("fireStoreService")
-class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
-    private val properties = defaultDataService.getTradeMarketProperties()
+class BDOTradeMarketRepository {
+    @Autowired
+    private val fireStoreService: FireStoreService? = null
+
+    private val properties = fireStoreService!!.getTradeMarketProperties()
     private val client = RestClient.builder()
         .baseUrl(properties.api)
         .defaultHeaders { headers ->
