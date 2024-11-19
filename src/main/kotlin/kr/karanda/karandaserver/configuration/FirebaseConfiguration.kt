@@ -38,7 +38,9 @@ class FirebaseConfigurationForDev {
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForProd {
     init {
-        FirebaseApp.initializeApp()
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp()
+        }
     }
 
     /*@PostConstruct
