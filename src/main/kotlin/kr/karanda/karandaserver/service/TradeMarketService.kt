@@ -18,7 +18,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 @Service
-@DependsOn("TradeMarketAsyncService", "BDOTradeMarketRepository")
+@DependsOn("TradeMarketAsyncService")
 class TradeMarketService(
     val asyncService: TradeMarketAsyncService,
     val bdoTradeMarketRepository: BDOTradeMarketRepository,

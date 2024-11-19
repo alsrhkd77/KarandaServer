@@ -1,10 +1,11 @@
 package kr.karanda.karandaserver.repository
 
+import jakarta.annotation.PostConstruct
 import kr.karanda.karandaserver.data.MarketWaitItem
 import kr.karanda.karandaserver.data.MarketItem
+import kr.karanda.karandaserver.data.TradeMarketProperties
 import kr.karanda.karandaserver.exception.BDOApiNotAvailable
 import kr.karanda.karandaserver.service.FireStoreService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.http.HttpRequest
 import org.springframework.stereotype.Repository
@@ -15,24 +16,29 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.min
 
-@Repository("BDOTradeMarketRepository")
+@Repository
 @DependsOn("fireStoreService")
-class BDOTradeMarketRepository {
-    @Autowired
-    private var fireStoreService: FireStoreService? = null
+class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
 
-    private val properties = fireStoreService!!.getTradeMarketProperties()
-    private val client = RestClient.builder()
-        .baseUrl(properties.api)
-        .defaultHeaders { headers ->
-            run {
-                for (header in properties.headers) {
-                    headers.add(header.key, header.value)
+    private lateinit var properties:TradeMarketProperties
+    private lateinit var client:RestClient
+    private lateinit var keyType: String
+
+    @PostConstruct
+    fun initialize(){
+        properties = fireStoreService!!.getTradeMarketProperties()
+        client = RestClient.builder()
+            .baseUrl(properties.api)
+            .defaultHeaders { headers ->
+                run {
+                    for (header in properties.headers) {
+                        headers.add(header.key, header.value)
+                    }
                 }
             }
-        }
-        .build()
-    private val keyType = properties.keyType
+            .build()
+        keyType = properties.keyType
+    }
 
     fun getWaitList(): List<MarketWaitItem> {
         val result = mutableListOf<MarketWaitItem>()

@@ -5,11 +5,11 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.UnsupportedJwtException
 import io.jsonwebtoken.security.MalformedKeyException
 import io.jsonwebtoken.security.SecurityException
+import jakarta.annotation.PostConstruct
 import kr.karanda.karandaserver.data.TokenProperties
 import kr.karanda.karandaserver.data.Tokens
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.service.FireStoreService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -21,16 +21,20 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 @DependsOn("fireStoreService")
-class TokenFactory {
-    @Autowired
-    private var fireStoreService: FireStoreService? = null
+class TokenFactory(val fireStoreService: FireStoreService) {
+
+    private lateinit var tokenProperties: TokenProperties
+
+    @PostConstruct
+    fun initialize(){
+        tokenProperties = fireStoreService.getTokenProperties()
+    }
 
     fun createTokens(userUUID: String, username: String): Tokens {
         return Tokens(createAccessToken(userUUID, username), createRefreshToken(username, username))
     }
 
     private fun createAccessToken(userUUID: String, username: String): String {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val claims = mutableMapOf("username" to username)
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.expire.toLong())
 
@@ -44,7 +48,6 @@ class TokenFactory {
     }
 
     fun createQualificationToken(): String {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val claims = mutableMapOf("platform" to "WINDOWS")
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(10)
 
@@ -57,7 +60,6 @@ class TokenFactory {
     }
 
     private fun createRefreshToken(userUUID: String, username: String): String {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val now = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.refreshExpire.toLong())
 
         return Jwts.builder()
@@ -70,7 +72,6 @@ class TokenFactory {
 
     // This function is for access token
     fun getAuthentication(token: String): Authentication {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val key = SecretKeySpec(tokenProperties.secretKey.toByteArray(), tokenProperties.algorithm)
         val payload = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
         val user = User(userUUID = payload.subject, username = payload["username"].toString())
@@ -78,7 +79,6 @@ class TokenFactory {
     }
 
     fun getAuthenticationFromRefreshToken(token: String): Authentication {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         val key = SecretKeySpec(tokenProperties.refreshKey.toByteArray(), tokenProperties.algorithm)
         val payload = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload
         val user = User(userUUID = payload.subject, username = payload["username"].toString())
@@ -86,17 +86,14 @@ class TokenFactory {
     }
 
     fun validateAccessToken(token: String): Boolean {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.secretKey.toByteArray(), tokenProperties.algorithm))
     }
 
     fun validateRefreshToken(token: String): Boolean {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.refreshKey.toByteArray(), tokenProperties.algorithm))
     }
 
     fun validateQualificationToken(token: String): Boolean {
-        val tokenProperties: TokenProperties = fireStoreService!!.getTokenProperties()
         return validateToken(token, SecretKeySpec(tokenProperties.platformKey.toByteArray(), tokenProperties.algorithm))
     }
 
