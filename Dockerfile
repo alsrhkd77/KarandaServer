@@ -17,7 +17,7 @@ RUN chmod +x ./gradlew
 RUN ./gradlew build --no-daemon  --exclude-task test
 
 # 빌드된 JAR 파일 복사
-COPY /app/build/libs/*-SNAPSHOT.jar /app/app.jar
+COPY ./build/libs/*-SNAPSHOT.jar ./app.jar
 
 # 포트 8080 노출
 #EXPOSE 8080
