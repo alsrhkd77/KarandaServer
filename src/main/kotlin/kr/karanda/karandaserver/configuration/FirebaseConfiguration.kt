@@ -12,17 +12,8 @@ import javax.annotation.PostConstruct
 @Profile("develop")
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForDev {
-    init {
-        val token = FileInputStream(File("./credentials/token.json"))
-        val options: FirebaseOptions = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(token))
-            .build()
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options)
-        }
-    }
 
-    /*@PostConstruct
+    @PostConstruct
     fun initializeFirebase() {
         val token = FileInputStream(File("./credentials/token.json"))
         val options: FirebaseOptions = FirebaseOptions.builder()
@@ -31,28 +22,21 @@ class FirebaseConfigurationForDev {
         if (FirebaseApp.getApps().isEmpty()) {
             FirebaseApp.initializeApp(options)
         }
-    }*/
+    }
 }
 
 @Profile("production")
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForProd {
-    init {
+
+    @PostConstruct
+    fun initializeFirebase() {
         val options: FirebaseOptions = FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.getApplicationDefault())
+            .setProjectId("karanda-384102")
             .build()
         if (FirebaseApp.getApps().isEmpty()) {
             FirebaseApp.initializeApp(options)
         }
     }
-
-    /*@PostConstruct
-    fun initializeFirebase() {
-        try {
-            FirebaseApp.initializeApp()
-        }
-        catch (e: Exception) {
-            println(e.message)
-        }
-    }*/
 }
