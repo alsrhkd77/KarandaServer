@@ -29,9 +29,9 @@ spring:
       on-profile: "production"
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://{DB_HOST}
-    username: {DB_USER}
-    password: {DB_PW}
+    url: jdbc:mariadb://${DB_HOST}
+    username: ${DB_USER}
+    password: ${DB_PW}
   jpa:
     hibernate:
       ddl-auto: validate
