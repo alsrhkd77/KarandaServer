@@ -11,6 +11,7 @@ class BDOItem(
     @Column(unique = true)
     var itemNum: Int,
     var itemNameKr: String,
+    var itemNameEn: String,
     var maxEnhancementLevel: Int,
     var grade: Int,
     var categoryNum: String,
@@ -26,5 +27,6 @@ class BDOItem(
         categoryNum = categoryNum,
         categoryNameKr = categoryNameKr,
         tradeAble = tradeAble,
+        itemNameEn = itemNameEn,
     )
 }
