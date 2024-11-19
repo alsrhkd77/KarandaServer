@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service
 @Service
 @DependsOn("FirebaseConfiguration")
 class FireStoreService {
-    private val db: Firestore = FirestoreClient.getFirestore()
     private var discordProperties: DiscordProperties? = null
     private var tokenProperties: TokenProperties? = null
 
@@ -41,11 +40,13 @@ class FireStoreService {
     }
 
     fun setTradeMarketLastUpdated(itemNum: Int) {
+        val db: Firestore = FirestoreClient.getFirestore()
         val data = TradeMarket(lastUpdatedItemID = itemNum.toString())
         db.collection("synchronize-data").document("trade-market").set(data)
     }
 
     private fun getDefaultData(name: String): DocumentSnapshot {
+        val db: Firestore = FirestoreClient.getFirestore()
         val docRef = db.collection("defaultData").document(name)
         val document = docRef.get().get()
         if (document.exists()) {
@@ -56,6 +57,7 @@ class FireStoreService {
     }
 
     private fun getSynchronizeData(name: String): DocumentSnapshot {
+        val db: Firestore = FirestoreClient.getFirestore()
         val docRef = db.collection("synchronize-data").document(name)
         val document = docRef.get().get()
         if (document.exists()) {
