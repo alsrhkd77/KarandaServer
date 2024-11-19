@@ -16,10 +16,6 @@ RUN chmod +x ./gradlew
 # 애플리케이션 빌드
 RUN ./gradlew build --no-daemon  --exclude-task test
 
-# 빌드된 JAR 파일 복사
-#COPY --from=builder /app/build/libs/*.jar /app/app.jar
-RUN cp ./build/libs/*.jar ./app.jar
-
 # Temurin JRE 이미지를 사용하여 더 작은 이미지를 기반으로 Production 환경 설정
 FROM eclipse-temurin:21-jre-alpine
 
@@ -27,7 +23,8 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 # 빌드된 JAR 파일 복사
-COPY --from=builder /app/app.jar /app/app.jar
+COPY --from=builder /app/build/libs/*.jar /app/app.jar
+#RUN cp ./build/libs/*.jar ./app.jar
 
 # Spring Boot 애플리케이션 실행
 CMD ["java", "-jar", "/app/app.jar"]
