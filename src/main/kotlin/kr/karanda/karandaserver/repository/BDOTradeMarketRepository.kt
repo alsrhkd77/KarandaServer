@@ -13,7 +13,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.min
 
-@Repository
+@Repository("BDOTradeMarketRepository")
 class BDOTradeMarketRepository(defaultDataService: FireStoreService) {
     private val properties = defaultDataService.getTradeMarketProperties()
     private val client = RestClient.builder()
