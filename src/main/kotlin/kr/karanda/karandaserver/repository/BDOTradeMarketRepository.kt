@@ -19,7 +19,7 @@ import kotlin.math.min
 @DependsOn("fireStoreService")
 class BDOTradeMarketRepository {
     @Autowired
-    private val fireStoreService: FireStoreService? = null
+    private var fireStoreService: FireStoreService? = null
 
     private val properties = fireStoreService!!.getTradeMarketProperties()
     private val client = RestClient.builder()

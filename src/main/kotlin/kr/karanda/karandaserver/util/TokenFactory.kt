@@ -23,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec
 @DependsOn("fireStoreService")
 class TokenFactory {
     @Autowired
-    private val fireStoreService: FireStoreService? = null
+    private var fireStoreService: FireStoreService? = null
 
     fun createTokens(userUUID: String, username: String): Tokens {
         return Tokens(createAccessToken(userUUID, username), createRefreshToken(username, username))
