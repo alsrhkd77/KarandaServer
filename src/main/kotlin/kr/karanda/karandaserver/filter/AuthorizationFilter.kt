@@ -25,10 +25,12 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
+        println(request.headerNames.toList())
         val headerName = request.headerNames.toList().find {
             it.equals("authorization", ignoreCase = true)
         }
         if(headerName == null) {
+            println("토큰 없음")
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
             return
         }
