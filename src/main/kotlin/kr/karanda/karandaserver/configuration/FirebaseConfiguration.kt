@@ -38,8 +38,11 @@ class FirebaseConfigurationForDev {
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForProd {
     init {
+        val options: FirebaseOptions = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.getApplicationDefault())
+            .build()
         if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp()
+            FirebaseApp.initializeApp(options)
         }
     }
 
