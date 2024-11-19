@@ -88,4 +88,16 @@ class BDOWebParser {
             throw Exception("failed to parse profile element")
         }
     }
+
+    fun getItemName(url: String, original: String): String {
+        val doc: Document = Jsoup.connect(url).get()
+        val main = doc.selectFirst("div.item_title > b")?.text() ?: throw Exception("Failed to parse profile element")
+        val sub =
+            doc.selectFirst("span.item_sub_title > b")?.text() ?: throw Exception("Failed to parse profile element")
+        if (main.trim().equals(original, ignoreCase = true)) {
+            return sub
+        } else {
+            throw Exception("Item name is not the same!")
+        }
+    }
 }

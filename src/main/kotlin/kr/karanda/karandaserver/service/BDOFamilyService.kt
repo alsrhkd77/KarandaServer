@@ -1,6 +1,6 @@
 package kr.karanda.karandaserver.service
 
-import kr.karanda.karandaserver.dto.User as UserDTO
+import jakarta.transaction.Transactional
 import kr.karanda.karandaserver.entity.BDOFamily as BDOFamilyEntity
 import kr.karanda.karandaserver.dto.BDOFamily as BDOFamilyDTO
 import kr.karanda.karandaserver.exception.UnknownUser
@@ -44,64 +44,104 @@ class BDOFamilyService(val userRepository: UserRepository, val bdoFamilyReposito
         }
 
         family = bdoFamilyRepository.save(family)
-        if (user.mainFamily == null) {
+        /*if (user.mainFamily == null) {
             user.mainFamily = family
             userRepository.save(user)
-        }
+        }*/
 
         return family.toDTO()
     }
 
+    @Transactional
     fun verifyFamily(uuid: String, code: String, region: String): BDOFamilyDTO {
         val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
         val family =
-            user.bdoFamily.firstOrNull { it.code == code && it.region == region && !it.verified } ?: throw BadRequestException()
+            user.bdoFamily.firstOrNull { it.code == code && it.region == region && !it.verified }
+                ?: throw BadRequestException()
         val now = ZonedDateTime.now(ZoneId.of("UTC"))
         val data = webParser.parseProfile(profileCode = code, region = region)
-        if (family.startVerification != null && family.startVerification!!.difference(now).toHours() < 3) {
-            if (family.firstVerification != null && family.firstVerification!!.difference(now).toHours() < 3) {
-                /* 2단계 완료 */
-                family.secondVerification = now
-                family.verified = true
-                family.familyName = data.familyName
+        if(family.startVerification == null || family.startVerification!!.difference(now).toHours() >= 3) {
+            family.startVerification = now
+            family.firstVerification = null
+            family.secondVerification = null
+            family.familyName = data.familyName
+            family.mainClass = data.mainClass
+            family.lifeSkillIsPrivate = data.lifeSkillLevel == null
+        } else if(family.firstVerification == null && family.lifeSkillIsPrivate != (data.lifeSkillLevel == null)){
+            /* 1단계 완료 */
+            family.firstVerification = now
+            family.secondVerification = null
+        } else if (family.firstVerification != null && family.lifeSkillIsPrivate == (data.lifeSkillLevel == null)){
+            /* 2단계 완료 */
+            family.secondVerification = now
+            family.lastUpdated = now
+            family.verified = true
+            family.familyName = data.familyName
 
-                /* 동일 가문 인증 확인 및 처리 */
-                bdoFamilyRepository.findByCodeAndRegionAndOwnerNot(code = code, region = region, owner = user)?.let {
-                    it.verified = false
-                    it.startVerification = null
-                    it.firstVerification = null
-                    it.secondVerification = null
-                    bdoFamilyRepository.save(it)
+            /*
+            * 동일 가문 인증 확인 및 처리
+            *
+            * 다른 유저가 가진 동일 가문에 대한 인증은 해제,
+            * 대표 가문의 경우 그것도 해제
+            * */
+            bdoFamilyRepository.findByCodeAndRegionAndOwnerNot(code = code, region = region, owner = user)?.let {
+                val owner = it.owner
+                if (owner.mainFamily?.id == it.id) {
+                    owner.mainFamily = null
+                    //userRepository.save(owner)
                 }
-
-                if (user.mainFamily?.verified == false){
-                    user.mainFamily = family
-                    userRepository.save(user)
-                }
-            } else {
-                /* 1단계 완료 */
-                family.firstVerification = now
-                family.secondVerification = null
+                it.verified = false
+                //it.startVerification = null
+                //it.firstVerification = null
+                //it.secondVerification = null
+                //bdoFamilyRepository.save(it)
             }
-            bdoFamilyRepository.saveAndFlush(family)
-            return family.toDTO()
+
+            if (user.mainFamily == null) {
+                user.mainFamily = family
+                //userRepository.save(user)
+            }
         } else {
-            throw Exception()
+            throw BadRequestException()
         }
+        return family.toDTO()
     }
 
     fun getAllFamily(uuid: String): List<BDOFamilyDTO> {
         return userRepository.findByUserUUID(uuid)?.bdoFamily?.map { it.toDTO() } ?: throw UnknownUser()
     }
 
-    fun changeMainFamily(uuid: String, code: String, region: String): UserDTO {
+    fun changeMainFamily(uuid: String, code: String, region: String): BDOFamilyDTO {
         val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
-        user.bdoFamily.firstOrNull{
-            it.code == code && it.region == region
-        }?.let {
-            user.mainFamily = it
-            userRepository.save(user)
+        val family = user.bdoFamily.firstOrNull { it.code == code && it.region == region && it.verified } ?: throw UnknownUser()
+        user.mainFamily = family
+        userRepository.save(user)
+        return family.toDTO()
+    }
+
+    fun deleteFamily(uuid: String, code: String, region: String) {
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val family: BDOFamilyEntity? = user.bdoFamily.firstOrNull { it.code == code && it.region == region }
+        if (family != null) {
+            if (user.mainFamily?.id == family.id) {
+                user.mainFamily = null
+                userRepository.save(user)
+            }
+            bdoFamilyRepository.delete(family)
         }
-        return user.toDTO()
+    }
+
+    @Transactional
+    fun refreshFamilyData(uuid: String, code: String, region: String): BDOFamilyDTO {
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val family: BDOFamilyEntity =
+            user.bdoFamily.firstOrNull { it.code == code && it.region == region } ?: throw UnknownUser()
+        val now = ZonedDateTime.now(ZoneId.of("UTC"))
+        val data = webParser.parseProfile(profileCode = code, region = region)
+        family.familyName = data.familyName
+        family.mainClass = data.mainClass
+        family.lastUpdated = now
+        //bdoFamilyRepository.save(family)
+        return family.toDTO()
     }
 }

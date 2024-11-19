@@ -62,17 +62,17 @@ class DiscordAuthController(
     @Operation(summary = "Authorization with access token")
     fun authorization(): AuthorizationResponse {
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
-        return authorizationByAuthentication(authentication, withRefreshToken = false)
+        return authorizationByAuthentication(authentication, withToken = false)
     }
 
     @GetMapping("/refresh")
     @Operation(summary = "Exchanging old tokens for new tokens")
     fun refreshAccessToken(): AuthorizationResponse {
         val authentication = SecurityContextHolder.getContext().authentication.principal as User
-        return authorizationByAuthentication(authentication, withRefreshToken = true)
+        return authorizationByAuthentication(authentication, withToken = true)
     }
 
-    private fun authorizationByAuthentication(authentication: User, withRefreshToken: Boolean): AuthorizationResponse {
+    private fun authorizationByAuthentication(authentication: User, withToken: Boolean): AuthorizationResponse {
         val response = AuthorizationResponse()
         val user = userService.getUserEntityByUUID(authentication.userUUID)
         val userData = discordService.getUserDataById(user.discordId).apply {
@@ -81,13 +81,14 @@ class DiscordAuthController(
             }
             response.username = this.username
             response.discordId = this.id
+            response.mainFamily = user.mainFamily?.toDTO()
         }
         if (userData.username != authentication.username) {
             user.userName = userData.username
             userService.updateUserFromEntity(user)
-            tokenFactory.createTokens(userUUID = user.userUUID, username = userData.username).apply {
-                response.token = this.accessToken
-                if (withRefreshToken) {
+            if(withToken){
+                tokenFactory.createTokens(userUUID = user.userUUID, username = userData.username).apply {
+                    response.token = this.accessToken
                     response.refreshToken = this.refreshToken
                 }
             }
