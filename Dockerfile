@@ -26,7 +26,7 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*-SNAPSHOT.jar /app/app.jar
 
 # 포트 8080 노출
-EXPOSE 8080
+#EXPOSE 8080
 
 # Spring Boot 애플리케이션 실행
 CMD ["java", "-jar", "/app/app.jar"]

@@ -12,9 +12,7 @@ import javax.annotation.PostConstruct
 @Profile("develop")
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForDev {
-
-    @PostConstruct
-    fun initializeFirebase() {
+    init {
         val token = FileInputStream(File("./credentials/token.json"))
         val options: FirebaseOptions = FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(token))
@@ -23,13 +21,27 @@ class FirebaseConfigurationForDev {
             FirebaseApp.initializeApp(options)
         }
     }
+
+    /*@PostConstruct
+    fun initializeFirebase() {
+        val token = FileInputStream(File("./credentials/token.json"))
+        val options: FirebaseOptions = FirebaseOptions.builder()
+            .setCredentials(GoogleCredentials.fromStream(token))
+            .build()
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp(options)
+        }
+    }*/
 }
 
 @Profile("production")
 @Configuration("FirebaseConfiguration")
 class FirebaseConfigurationForProd {
+    init {
+        FirebaseApp.initializeApp()
+    }
 
-    @PostConstruct
+    /*@PostConstruct
     fun initializeFirebase() {
         try {
             FirebaseApp.initializeApp()
@@ -37,5 +49,5 @@ class FirebaseConfigurationForProd {
         catch (e: Exception) {
             println(e.message)
         }
-    }
+    }*/
 }
