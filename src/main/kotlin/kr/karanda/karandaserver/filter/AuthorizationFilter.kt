@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.util.TokenFactory
+import org.springframework.http.HttpMethod
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.stereotype.Component
@@ -64,7 +65,6 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
                     SecurityContextHolder.getContext().authentication = it
                 }
             } else {
-                println("토큰 검증 실패\n ${token}")
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                 return
             }
@@ -73,7 +73,8 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
     }
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        if (request.method == "OPTIONS") return true
+        // Allow preflight
+        if (HttpMethod.OPTIONS.matches(request.method)) return true
         if (whitePathMatcher != null && whitePathMatcher!!.matches(request)) return true
         return false
     }
@@ -81,10 +82,8 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
     private fun getToken(value: String): String? {
         val items = value.split(" ")
         if (items.size == 2 && items.first() == "Bearer") {
-            println("Token found")
             return items.last()
         }
-        println("Token not found")
         return null
     }
 }
