@@ -2,6 +2,7 @@ package kr.karanda.karandaserver.configuration
 
 import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.filter.AuthorizationFilter
+import kr.karanda.karandaserver.filter.QualificationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -18,7 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration(val authorizationFilter: AuthorizationFilter) {
+class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qualificationFilter: QualificationFilter) {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
@@ -84,17 +85,17 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter) {
         http {
             authorizeRequests {
                 authorize(whitePathMatcher, permitAll)
-                //authorize("/docs", permitAll)
-                //authorize("/api-docs", permitAll)
-                //authorize("/api-docs/*", permitAll)
-                //authorize("/swagger-ui/*", permitAll)
-                //authorize("/auth/discord/authenticate/*", permitAll)
-                //authorize("/chzzk/*", permitAll)
-                //authorize("/live-channel", permitAll)
-                //authorize("/live-data/*", permitAll)
                 authorize(anyRequest, authenticated)
             }
             addFilterBefore<UsernamePasswordAuthenticationFilter>(authorizationFilter)
+        }
+        return http.build()
+    }
+
+    @Bean
+    fun qualificationFilterChain(http: HttpSecurity): SecurityFilterChain {
+        http {
+            addFilterBefore<UsernamePasswordAuthenticationFilter>(qualificationFilter)
         }
         return http.build()
     }
