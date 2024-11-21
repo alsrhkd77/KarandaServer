@@ -6,7 +6,6 @@ import kr.karanda.karandaserver.data.MarketItem
 import kr.karanda.karandaserver.data.TradeMarketProperties
 import kr.karanda.karandaserver.exception.BDOApiNotAvailable
 import kr.karanda.karandaserver.service.FireStoreService
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.DependsOn
 import org.springframework.http.HttpRequest
 import org.springframework.stereotype.Repository
@@ -19,9 +18,7 @@ import kotlin.math.min
 
 @Repository
 @DependsOn("fireStoreService")
-class BDOTradeMarketRepository {
-    @Autowired
-    private lateinit var fireStoreService: FireStoreService
+class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
 
     private lateinit var properties:TradeMarketProperties
     private lateinit var client:RestClient
@@ -152,7 +149,9 @@ private data class BDOResponse(val resultCode: Int, val resultMsg: String) {
                 )
             }
         } catch (e: Exception) {
-            print(e)
+            println(e)
+            println("status code: $resultCode")
+            println(resultMsg)
         }
         return result
     }
