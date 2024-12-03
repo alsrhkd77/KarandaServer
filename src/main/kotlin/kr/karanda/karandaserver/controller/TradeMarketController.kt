@@ -23,7 +23,7 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
     }
 
     @GetMapping("/latest")
-    @Operation(summary = "Get the latest pricing information for requested items ")
+    @Operation(summary = "Get the latest pricing information for requested items")
     fun getLatest(@RequestParam(name = "target_list", required = true) target: List<String>): List<MarketItem> {
         if(target.isEmpty() || target.size > 100) throw Exception()
         val targetItems = mutableListOf<Set<String>>()
@@ -40,8 +40,15 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
     }
 
     @GetMapping("/detail/{itemCode}")
-    @Operation(summary = "Get pricing details for a requested item ")
-    fun getDetail(@PathVariable itemCode: Int): List<MarketItem> {
+    @Operation(summary = "Get pricing details for a requested item (Deprecated)")
+    fun getDetail1(@PathVariable itemCode: Int): List<MarketItem> {
+        //TODO: 프론트 코드 변경 및 배포 후 제거할 것
+        return tradeMarketService.getMarketDataList(itemNum = itemCode)
+    }
+
+    @GetMapping("/detail")
+    @Operation(summary = "Get pricing details for a requested item")
+    fun getDetail(@RequestParam itemCode: Int): List<MarketItem> {
         return tradeMarketService.getMarketDataList(itemNum = itemCode)
     }
 }
