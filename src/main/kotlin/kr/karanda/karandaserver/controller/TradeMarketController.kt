@@ -48,7 +48,7 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
 
     @GetMapping("/detail")
     @Operation(summary = "Get pricing details for a requested item")
-    fun getDetail(@RequestParam itemCode: Int): List<MarketItem> {
+    fun getDetail(@RequestParam(name = "code", required = true) itemCode: Int): List<MarketItem> {
         return tradeMarketService.getMarketDataList(itemNum = itemCode)
     }
 }
