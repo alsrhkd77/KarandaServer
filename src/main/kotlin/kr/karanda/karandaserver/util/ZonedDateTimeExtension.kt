@@ -13,7 +13,8 @@ fun ZonedDateTime.toMidnight(): ZonedDateTime {
 }
 
 fun ZonedDateTime.isSameDayAs(other: ZonedDateTime): Boolean {
-    return !(this.year != other.year || this.monthValue != other.monthValue || this.dayOfMonth != other.dayOfMonth)
+    val zoned = other.withZoneSameInstant(this.zone)
+    return !(this.year != zoned.year || this.monthValue != zoned.monthValue || this.dayOfMonth != zoned.dayOfMonth)
 }
 
 fun ZonedDateTime.difference(other: ZonedDateTime): Duration {
