@@ -37,7 +37,7 @@ class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerReque
             it.equals("qualification", ignoreCase = true)
         }
         if (headerName != null) {
-            val token: String = request.getHeader(headerName)
+            val token: String = request.getHeader(headerName).replace("Bearer", "").trim()
             tokenFactory.validateQualificationToken(token).apply {
                 result = this
             }

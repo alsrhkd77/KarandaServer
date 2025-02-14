@@ -2,8 +2,8 @@ package kr.karanda.karandaserver
 
 import io.jsonwebtoken.Jwts
 import kr.karanda.karandaserver.data.TokenProperties
-import kr.karanda.karandaserver.repository.UserRepository
-import kr.karanda.karandaserver.service.FireStoreService
+import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.repository.jpa.UserRepository
 import kr.karanda.karandaserver.service.UserService
 import kr.karanda.karandaserver.util.TokenFactory
 import org.junit.jupiter.api.BeforeEach
@@ -36,7 +36,7 @@ class DiscordAuthControllerTests {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var fireStoreService: FireStoreService
+    private lateinit var defaultDataRepository: DefaultDataRepository
 
     @Autowired
     private lateinit var wac: WebApplicationContext
@@ -49,7 +49,7 @@ class DiscordAuthControllerTests {
     fun setUp() {
         discordId = userRepository.findAll().first().discordId
         println("discordId: $discordId")
-        tokenProperties = fireStoreService.getTokenProperties()
+        tokenProperties = defaultDataRepository.getTokenProperties()
         client = MockMvcWebTestClient.bindToApplicationContext(wac)
             //.baseUrl("http://localhost:8000")
             //.defaultHeader("Qualification", tokenFactory.createQualificationToken())
