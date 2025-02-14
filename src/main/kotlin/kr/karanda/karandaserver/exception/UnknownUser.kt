@@ -1,3 +1,7 @@
 package kr.karanda.karandaserver.exception
 
-class UnknownUser: Exception("It is unknown user")
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.ResponseStatus
+
+@ResponseStatus(code = HttpStatus.UNAUTHORIZED, reason = "Unknown credentials")
+class UnknownUser: RuntimeException()
