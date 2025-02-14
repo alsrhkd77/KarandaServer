@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.data.AuthorizationResponse
 import kr.karanda.karandaserver.data.Tokens
-import kr.karanda.karandaserver.dto.User
+import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.service.DiscordService
 import kr.karanda.karandaserver.service.UserService
 import kr.karanda.karandaserver.util.TokenFactory
@@ -33,7 +33,11 @@ class DiscordAuthController(
         val discordUser = discordService.getUserDataByToken(discordToken)
         var user = userService.getByDiscordId(discordUser.id)
         if (user == null) {
-            user = userService.createUser(discordId = discordUser.id, username = discordUser.username)
+            user = userService.createUser(
+                discordId = discordUser.id,
+                username = discordUser.username,
+                avatar = discordUser.avatar
+            )
         }
         return tokenFactory.createTokens(userUUID = user.userUUID, username = user.username)
     }
@@ -61,36 +65,37 @@ class DiscordAuthController(
     @GetMapping("/authorization")
     @Operation(summary = "Authorization with access token")
     fun authorization(): AuthorizationResponse {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as User
+        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return authorizationByAuthentication(authentication, withToken = false)
     }
 
     @GetMapping("/refresh")
     @Operation(summary = "Exchanging old tokens for new tokens")
     fun refreshAccessToken(): AuthorizationResponse {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as User
+        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return authorizationByAuthentication(authentication, withToken = true)
     }
 
-    private fun authorizationByAuthentication(authentication: User, withToken: Boolean): AuthorizationResponse {
+    private fun authorizationByAuthentication(authentication: TokenClaims, withToken: Boolean): AuthorizationResponse {
         val response = AuthorizationResponse()
         val user = userService.getUserEntityByUUID(authentication.userUUID)
-        val userData = discordService.getUserDataById(user.discordId).apply {
-            if (this.avatar != null) {
-                response.avatar = "${this.id}/${this.avatar}.png"
+        val userData = discordService.getUserDataById(user.discordId)
+        if (userData.avatar != null) {
+            response.avatar = "${userData.id}/${userData.avatar}.png"
+            if (userData.avatar != user.avatarHash) {
+                user.avatarHash = userData.avatar
             }
-            response.username = this.username
-            response.discordId = this.id
-            response.mainFamily = user.mainFamily?.toDTO()
         }
-        if (userData.username != authentication.username) {
+        response.username = userData.username
+        response.discordId = userData.id
+        if (userData.username != user.userName) {
             user.userName = userData.username
-            userService.updateUserFromEntity(user)
-            if(withToken){
-                tokenFactory.createTokens(userUUID = user.userUUID, username = userData.username).apply {
-                    response.token = this.accessToken
-                    response.refreshToken = this.refreshToken
-                }
+        }
+        userService.updateUserFromEntity(user)
+        if (withToken) {
+            tokenFactory.createTokens(userUUID = user.userUUID, username = userData.username).apply {
+                response.token = this.accessToken
+                response.refreshToken = this.refreshToken
             }
         }
         return response
@@ -98,7 +103,7 @@ class DiscordAuthController(
 
     @DeleteMapping("/unregister")
     fun unregister(): ResponseEntity<Any> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as User
+        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         userService.deleteUserByUUID(authentication.userUUID)
         return ResponseEntity(HttpStatus.OK)
     }

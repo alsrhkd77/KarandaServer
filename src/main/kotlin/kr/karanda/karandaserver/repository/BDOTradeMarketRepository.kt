@@ -5,8 +5,6 @@ import kr.karanda.karandaserver.data.MarketWaitItem
 import kr.karanda.karandaserver.data.MarketItem
 import kr.karanda.karandaserver.data.TradeMarketProperties
 import kr.karanda.karandaserver.exception.BDOApiNotAvailable
-import kr.karanda.karandaserver.service.FireStoreService
-import org.springframework.context.annotation.DependsOn
 import org.springframework.http.HttpRequest
 import org.springframework.stereotype.Repository
 import org.springframework.web.client.RestClient
@@ -17,16 +15,14 @@ import java.time.ZonedDateTime
 import kotlin.math.min
 
 @Repository
-@DependsOn("fireStoreService")
-class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
+class BDOTradeMarketRepository(private val defaultDataRepository: DefaultDataRepository) {
 
-    private lateinit var properties:TradeMarketProperties
+    val properties:TradeMarketProperties
+        get() = defaultDataRepository.getTradeMarketProperties()
     private lateinit var client:RestClient
-    private lateinit var keyType: String
 
     @PostConstruct
     fun initialize(){
-        properties = fireStoreService.getTradeMarketProperties()
         client = RestClient.builder()
             .baseUrl(properties.api)
             .defaultHeaders { headers ->
@@ -37,7 +33,6 @@ class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
                 }
             }
             .build()
-        keyType = properties.keyType
     }
 
     fun getWaitList(): List<MarketWaitItem> {
@@ -62,7 +57,7 @@ class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
     fun getSubList(mainKey: Int): List<MarketItem> {
         val result = mutableListOf<MarketItem>()
         val payload = mapOf(
-            "keyType" to keyType,
+            "keyType" to properties.keyType,
             "mainKey" to mainKey.toString(),
         )
         val response = client.post()
@@ -95,7 +90,7 @@ class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
         if (items.isEmpty()) throw Exception("Item list is empty")
         val result = mutableListOf<MarketItem>()
         val payload = mapOf(
-            "keyType" to keyType,
+            "keyType" to properties.keyType,
             "searchResult" to items.joinToString(separator = ","),
         )
         val response = client.post()
@@ -109,7 +104,7 @@ class BDOTradeMarketRepository(val fireStoreService: FireStoreService) {
     fun getPriceInfo(mainKey: Int, subKey: Int = 0): List<Long> {
         val result = mutableListOf<Long>()
         val payload = mapOf(
-            "keyType" to keyType,
+            "keyType" to properties.keyType,
             "mainKey" to mainKey.toString(),
             "subKey" to subKey.toString(),
         )

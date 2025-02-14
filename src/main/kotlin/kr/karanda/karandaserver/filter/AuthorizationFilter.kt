@@ -4,7 +4,7 @@ import io.jsonwebtoken.ExpiredJwtException
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import kr.karanda.karandaserver.dto.User
+import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.http.HttpMethod
 import org.springframework.security.core.context.SecurityContextHolder
@@ -33,26 +33,29 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
             return
         }
-        val token = getToken(request.getHeader(headerName))
+        val token = request.getHeader(headerName).removePrefix("Bearer ")
         if (request.requestURI.equals("/auth/discord/refresh")) {
-            val refreshToken = getToken(request.getHeader("refresh-token"))
-            if (token != null && refreshToken != null && tokenFactory.validateRefreshToken(refreshToken)) {
-                var uuid: String? = null
+            if(request.headerNames.toList().find { it.equals("refresh-token", ignoreCase = true) } == null) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                return
+            }
+            val refreshToken = request.getHeader("refresh-token").removePrefix("Bearer ")
+            if (tokenFactory.validateRefreshToken(refreshToken)) {
+                var uuid: String?
                 try {
                     tokenFactory.getAuthentication(token).let {
-                        uuid = (it.principal as User).userUUID
+                        uuid = (it.principal as TokenClaims).userUUID
                     }
                 } catch (e: ExpiredJwtException) {
                     uuid = e.claims.subject
                 } catch (e: Exception) {
                     //잘못된 토큰
-                    print(e)
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
                     return
                 }
 
                 val authentication = tokenFactory.getAuthenticationFromRefreshToken(refreshToken)
-                if (uuid != null && (authentication.principal as User).userUUID == uuid) {
+                if (uuid != null && (authentication.principal as TokenClaims).userUUID == uuid) {
                     SecurityContextHolder.getContext().authentication = authentication
                 } else {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
@@ -60,7 +63,7 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
                 }
             }
         } else {
-            if (token != null && tokenFactory.validateAccessToken(token)) {
+            if (tokenFactory.validateAccessToken(token)) {
                 tokenFactory.getAuthentication(token).let {
                     SecurityContextHolder.getContext().authentication = it
                 }
@@ -77,13 +80,5 @@ class AuthorizationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         if (HttpMethod.OPTIONS.matches(request.method)) return true
         if (whitePathMatcher != null && whitePathMatcher!!.matches(request)) return true
         return false
-    }
-
-    private fun getToken(value: String): String? {
-        val items = value.split(" ")
-        if (items.size == 2 && items.first() == "Bearer") {
-            return items.last()
-        }
-        return null
     }
 }

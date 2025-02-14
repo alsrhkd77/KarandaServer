@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.service
 import kr.karanda.karandaserver.data.DiscordExchangeCodeResponse
 import kr.karanda.karandaserver.data.DiscordProperties
 import kr.karanda.karandaserver.data.DiscordUserDataResponse
+import kr.karanda.karandaserver.repository.DefaultDataRepository
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -10,9 +11,10 @@ import org.springframework.util.CollectionUtils
 import org.springframework.web.client.RestClient
 
 @Service
-class DiscordService(fireStoreService: FireStoreService) {
+class DiscordService(private val defaultDataRepository: DefaultDataRepository) {
 
-    private val properties: DiscordProperties = fireStoreService.getDiscordProperties()
+    private val properties: DiscordProperties
+        get() = defaultDataRepository.getDiscordProperties()
     val client = RestClient.create(properties.api)
 
     fun exchangeCode(code: String, redirectUrl: String): String {

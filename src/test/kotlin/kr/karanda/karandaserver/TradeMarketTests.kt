@@ -1,6 +1,6 @@
 package kr.karanda.karandaserver
 
-import kr.karanda.karandaserver.repository.MarketDataRepository
+import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.Test

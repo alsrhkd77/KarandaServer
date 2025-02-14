@@ -4,9 +4,9 @@ import kr.karanda.karandaserver.data.MarketItem
 import kr.karanda.karandaserver.data.MarketWaitItem
 import kr.karanda.karandaserver.dto.BDOItem
 import kr.karanda.karandaserver.entity.MarketData
-import kr.karanda.karandaserver.repository.BDOItemRepository
+import kr.karanda.karandaserver.repository.jpa.BDOItemRepository
 import kr.karanda.karandaserver.repository.BDOTradeMarketRepository
-import kr.karanda.karandaserver.repository.MarketDataRepository
+import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
 import kr.karanda.karandaserver.util.difference
 import kr.karanda.karandaserver.util.isSameDayAs
 import kr.karanda.karandaserver.util.toMidnight
@@ -38,9 +38,9 @@ class TradeMarketService(
         val itemsNeedUpdate = mutableListOf<BDOItem>()
         val entitiesNeedUpdate = mutableListOf<MarketData>()
 
-        val data =
-            marketDataRepository.findAllByItemNumIsInAndDateIsAfter(itemData.map { it.itemNum }, now.toMidnight())
-                .toMutableList()
+        val data = marketDataRepository
+            .findAllByItemNumIsInAndDateIsAfter(itemData.map { it.itemNum }, now.toMidnight())
+            .toMutableList()
 
         if (data.isEmpty()) {
             itemsNeedInit.addAll(itemData)
@@ -153,7 +153,10 @@ class TradeMarketService(
             return -1
         }
         val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
-        val data = marketDataRepository.findAllByItemNumAndDateIsAfterOrderByDateDesc(itemNum = item.itemNum, date = now.minusDays(95))
+        val data = marketDataRepository.findAllByItemNumAndDateIsAfterOrderByDateDesc(
+            itemNum = item.itemNum,
+            date = now.minusDays(95)
+        )
             .groupBy { it.enhancementLevel }
             .toMutableMap()
         val create = mutableListOf<MarketData>()
@@ -194,9 +197,9 @@ class TradeMarketService(
         }
 
         //update price data
-        for(enhancementLevel in data.keys){
+        for (enhancementLevel in data.keys) {
             val priceData = bdoTradeMarketRepository.getPriceInfo(mainKey = item.itemNum, subKey = enhancementLevel)
-            for(i in 1 until priceData.size){
+            for (i in 1 until priceData.size) {
                 val targetDate = now.minusDays(i.toLong())
                 val target = data[enhancementLevel]?.find { targetDate.isSameDayAs(it.date) }
                 if (target == null) {
@@ -210,7 +213,7 @@ class TradeMarketService(
                         date = targetDate.toMidnight()
                     )
                     create.add(newEntity)
-                } else if(target.price != priceData[i]){
+                } else if (target.price != priceData[i]) {
                     target.price = priceData[i]
                     target.date = targetDate.toMidnight()
                     update.add(target)
