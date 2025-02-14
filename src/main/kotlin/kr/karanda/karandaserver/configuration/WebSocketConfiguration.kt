@@ -1,5 +1,6 @@
 package kr.karanda.karandaserver.configuration
 
+import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.util.TokenFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
@@ -63,36 +64,33 @@ class WebSocketConfiguration : WebSocketMessageBrokerConfigurer {
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 99)
-class WebSocketChannelInterceptor : ChannelInterceptor {
-
-    @Autowired
-    private var tokenFactory: TokenFactory? = null
-
-
+class WebSocketChannelInterceptor(val tokenFactory: TokenFactory) : ChannelInterceptor {
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java) ?: return null
         //println(accessor.command)
         //println(accessor.messageHeaders)
-
-        val qualification = accessor.getNativeHeader("Qualification")
         if (StompCommand.CONNECT == accessor.command) {
-            tokenFactory?.let {
-                if (qualification == null || !it.validateQualificationToken(qualification.first())) {
-                    println("throw exception!!")
+            val qualification = accessor.getNativeHeader("Qualification")?.firstOrNull() ?: return null
+            return if (tokenFactory.validateQualificationToken(qualification)) {
+                message
+            } else {
+                null
+            }
+        } else if (StompCommand.SUBSCRIBE == accessor.command) {
+            //println("SUBSCRIBE ${accessor.destination}")
+            val destination: String = accessor.destination ?: return null
+            if (destination.contains("/user-private/")) {
+                val authorization = accessor.getNativeHeader("Authorization")?.firstOrNull() ?: return null
+                if (tokenFactory.validateAccessToken(authorization)) {
+                    val uuid = (tokenFactory.getAuthentication(authorization).principal as TokenClaims).userUUID
+                    accessor.destination = destination.replace("/user-private/", "/${uuid}/")
+                    return message
+                } else {
+                    return null
                 }
             }
-
         }
-        val authorization = accessor.getNativeHeader("Authorization")
-        if (StompCommand.SUBSCRIBE == accessor.command) {
-            println("SUBSCRIBE ${accessor.destination}")
-        }
-        //TODO: check qualification token
         return message
-    }
-
-    fun validateTokens(qualification: String, authorization: String? = null): Boolean {
-        return true
     }
 }

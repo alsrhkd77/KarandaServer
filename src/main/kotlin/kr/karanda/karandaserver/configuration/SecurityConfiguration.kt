@@ -72,6 +72,8 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
                     "/live-channel",
                     "/live-data/**",
                     "/trade-market/**",
+                    "/adventurer-hub/post",
+                    "/adventurer-hub/posts",
                 )
                 if (request == null) return false
                 val matcher = AntPathMatcher()
