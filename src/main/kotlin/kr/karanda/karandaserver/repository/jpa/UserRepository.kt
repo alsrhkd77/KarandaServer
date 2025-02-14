@@ -1,4 +1,4 @@
-package kr.karanda.karandaserver.repository
+package kr.karanda.karandaserver.repository.jpa
 
 import kr.karanda.karandaserver.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
