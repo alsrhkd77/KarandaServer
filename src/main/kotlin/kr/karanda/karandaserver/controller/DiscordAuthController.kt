@@ -58,7 +58,7 @@ class DiscordAuthController(
         if (environment.activeProfiles.contains("production")) {
             frontUrl = "https://www.karanda.kr"
         }
-        frontUrl += "/#/auth/authenticate"
+        frontUrl += "/auth/authenticate"
         return ModelAndView("redirect:$frontUrl?token=$accessToken&&refresh-token=$refreshToken")
     }
 
