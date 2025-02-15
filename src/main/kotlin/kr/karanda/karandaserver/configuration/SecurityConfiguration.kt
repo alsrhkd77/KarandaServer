@@ -30,6 +30,8 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
             "https://hammuu1112.github.io",
             "http://localhost:8082",
             "http://localhost:2345",
+            "https://karanda-384102.web.app",
+            "https://karanda-384102.firebaseapp.com"
         )
         configuration.allowedMethods = listOf("*")
         configuration.allowedHeaders = listOf("*")
