@@ -29,8 +29,8 @@ class TokenFactory(private val defaultDataRepository: DefaultDataRepository) {
 
     private fun createAccessToken(userUUID: String, username: String): String {
         val claims = mutableMapOf("username" to username)
-        //val expire = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.expire.toLong())
-        val expire = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(10)
+        val expire = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(tokenProperties.expire.toLong())
+        //val expire = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(10)
 
         return Jwts.builder()
             .subject(userUUID)
