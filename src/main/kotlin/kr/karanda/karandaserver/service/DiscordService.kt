@@ -30,7 +30,6 @@ class DiscordService(private val defaultDataRepository: DefaultDataRepository) {
         val response = client.post()
             .uri("/oauth2/token")
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-            //.body(BodyInserters.fromFormData(CollectionUtils.toMultiValueMap(data)))
             .body(CollectionUtils.toMultiValueMap(data))
             .retrieve()
             .body(DiscordExchangeCodeResponse::class.java)

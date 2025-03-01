@@ -1,6 +1,5 @@
 package kr.karanda.karandaserver.controller
 
-import kr.karanda.karandaserver.data.Chzzk
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -23,3 +22,5 @@ class ChzzkController {
     }
 
 }
+
+data class Chzzk(val code: Int, val message: String?, val content: Map<String, Any>)
