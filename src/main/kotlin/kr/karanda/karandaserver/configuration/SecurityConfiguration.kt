@@ -27,7 +27,7 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
         configuration.allowedOrigins = listOf(
             "https://www.karanda.kr",
             "https://karanda.kr",
-            "https://hammuu1112.github.io",
+            //"https://hammuu1112.github.io",
             "http://localhost:8082",
             "http://localhost:2345",
             "https://karanda-384102.web.app",
