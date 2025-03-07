@@ -5,9 +5,6 @@ import com.sun.org.slf4j.internal.LoggerFactory
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.UnsupportedJwtException
-import io.jsonwebtoken.security.MalformedKeyException
-import io.jsonwebtoken.security.SecurityException
 import kr.karanda.karandaserver.dto.TokenProperties
 import kr.karanda.karandaserver.dto.Tokens
 import kr.karanda.karandaserver.dto.TokenClaims
