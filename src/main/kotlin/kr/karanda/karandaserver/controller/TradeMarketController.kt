@@ -2,8 +2,9 @@ package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import kr.karanda.karandaserver.data.MarketItem
-import kr.karanda.karandaserver.data.MarketWaitItem
+import kr.karanda.karandaserver.dto.MarketItem
+import kr.karanda.karandaserver.dto.MarketWaitItem
+import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.service.TradeMarketService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,7 +20,7 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
     @GetMapping("/wait-list")
     @Operation(summary = "Get a list of products waiting to be listed on the trade market")
     fun getWaitList(): List<MarketWaitItem> {
-        return tradeMarketService.getWaitList()
+        return tradeMarketService.getWaitList(BDORegion.KR)
     }
 
     @GetMapping("/latest")
@@ -35,20 +36,20 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
                 targetItems.add(setOf(it.first(), it.last()))
             }
         }
-        val data = tradeMarketService.getLatest(target = itemNumList)
+        val data = tradeMarketService.getLatestPriceData(target = itemNumList, region = BDORegion.KR)
         return data.filter { targetItems.contains(setOf(it.itemNum.toString(), it.enhancementLevel.toString())) }
     }
 
+    //TODO: 프론트 코드 변경 및 배포 후 제거할 것
     @GetMapping("/detail/{itemCode}")
     @Operation(summary = "Get pricing details for a requested item (Deprecated)")
     fun getDetail1(@PathVariable itemCode: Int): List<MarketItem> {
-        //TODO: 프론트 코드 변경 및 배포 후 제거할 것
-        return tradeMarketService.getMarketDataList(itemNum = itemCode)
+        return tradeMarketService.getPriceDetail(itemNum = itemCode, region = BDORegion.KR)
     }
 
     @GetMapping("/detail")
     @Operation(summary = "Get pricing details for a requested item")
     fun getDetail(@RequestParam(name = "code", required = true) itemCode: Int): List<MarketItem> {
-        return tradeMarketService.getMarketDataList(itemNum = itemCode)
+        return tradeMarketService.getPriceDetail(itemNum = itemCode, region = BDORegion.KR)
     }
 }

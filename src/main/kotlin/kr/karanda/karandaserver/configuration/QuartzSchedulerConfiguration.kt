@@ -1,6 +1,7 @@
 package kr.karanda.karandaserver.configuration
 
-import kr.karanda.karandaserver.quartz.MarketDataUpdateJob
+import kr.karanda.karandaserver.quartz.MarketHistoricalPriceDataUpdateJob
+import kr.karanda.karandaserver.quartz.MarketLatestPriceDataUpdateJob
 import kr.karanda.karandaserver.quartz.PublishMarketWaitListJob
 import org.quartz.JobBuilder
 import org.quartz.JobDetail
@@ -15,23 +16,44 @@ import org.springframework.context.annotation.Profile
 @Configuration
 class QuartzSchedulerConfiguration {
     @Bean
-    fun marketDataUpdateJobDetail(): JobDetail {
+    fun marketLatestPriceDataUpdateJobDetail(): JobDetail {
         return JobBuilder
-            .newJob(MarketDataUpdateJob::class.java)
-            .withIdentity("marketUpdateJob", "tradeMarket")
+            .newJob(MarketLatestPriceDataUpdateJob::class.java)
+            .withIdentity("marketLatestPriceDataUpdateJob", "tradeMarket")
             .storeDurably()
             .build()
     }
 
     @Profile("production")
     @Bean
-    fun marketDataUpdateTrigger(@Qualifier("marketDataUpdateJobDetail") jobDetail: JobDetail): Trigger {
+    fun marketLatestPriceDataUpdateTrigger(@Qualifier("marketLatestPriceDataUpdateJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder
             .newTrigger()
             .forJob(jobDetail)
-            .withIdentity("marketUpdateTrigger", "tradeMarket")
+            .withIdentity("marketLatestDataUpdateTrigger", "tradeMarket")
             .startNow()
             .withSchedule(simpleSchedule().withIntervalInSeconds(10).repeatForever())
+            .build()
+    }
+
+    @Bean
+    fun marketHistoricalPriceDataUpdateJobDetail(): JobDetail {
+        return JobBuilder
+            .newJob(MarketHistoricalPriceDataUpdateJob::class.java)
+            .withIdentity("marketHistoricalPriceDataUpdateJob", "tradeMarket")
+            .storeDurably()
+            .build()
+    }
+
+    @Profile("production")
+    @Bean
+    fun marketHistoricalPriceDataUpdateTrigger(@Qualifier("marketHistoricalPriceDataUpdateJobDetail") jobDetail: JobDetail): Trigger {
+        return TriggerBuilder
+            .newTrigger()
+            .forJob(jobDetail)
+            .withIdentity("marketHistoricalPriceUpdateTrigger", "tradeMarket")
+            .startNow()
+            .withSchedule(simpleSchedule().withIntervalInSeconds(60).repeatForever())
             .build()
     }
 

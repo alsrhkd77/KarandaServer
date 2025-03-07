@@ -30,7 +30,7 @@ class SynchronizationDataRepository(
     fun getTradeMarketLastUpdated(): Int {
         val document = collection().document("trade-market").get().get()
         if (document.exists()) {
-            return document.toObject(TradeMarket::class.java)?.lastUpdatedItemID?.toInt()
+            return document.toObject(TradeMarket::class.java)?.lastUpdatedItem?.toInt()
                 ?: throw Exception("Firestore data does invalid! (trade-market)")
         } else {
             throw Exception("Firestore data does not exist! (trade-market)")
@@ -38,8 +38,21 @@ class SynchronizationDataRepository(
     }
 
     fun setTradeMarketLastUpdated(itemNum: Int) {
-        val data = TradeMarket(lastUpdatedItemID = itemNum.toString())
-        collection().document("trade-market").set(data)
+        collection().document("trade-market").update("lastUpdatedItem", itemNum.toString())
+    }
+
+    fun getTradeMarketPriceLastUpdated(): Int {
+        val document = collection().document("trade-market").get().get()
+        if (document.exists()) {
+            return document.toObject(TradeMarket::class.java)?.priceLastUpdated?.toInt()
+                ?: throw Exception("Firestore data does invalid! (trade-market)")
+        } else {
+            throw Exception("Firestore data does not exist! (trade-market)")
+        }
+    }
+
+    fun setTradeMarketPriceLastUpdated(itemNum: Int) {
+        collection().document("trade-market").update("priceLastUpdated", itemNum.toString())
     }
 
     private fun listenBroadcastMessage() {
@@ -82,5 +95,7 @@ class SynchronizationDataRepository(
 }
 
 private data class TradeMarket(
-    var lastUpdatedItemID: String = ""
+    var lastUpdatedItemID: String = "",
+    var lastUpdatedItem: String = "",
+    var priceLastUpdated: String = "",
 )

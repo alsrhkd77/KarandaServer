@@ -6,7 +6,8 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
-import kr.karanda.karandaserver.data.MarketItem
+import kr.karanda.karandaserver.dto.MarketItem
+import kr.karanda.karandaserver.enums.BDORegion
 import java.time.ZonedDateTime
 
 @Entity
@@ -23,7 +24,8 @@ class MarketData(
     var price: Long,
     var cumulativeVolume: Long = 0,
     var currentStock: Long = 0,
-    var date: ZonedDateTime
+    var date: ZonedDateTime,
+    var region: String = BDORegion.KR.name,
 ) {
     fun toDTO() = MarketItem(
         itemNum = itemNum,

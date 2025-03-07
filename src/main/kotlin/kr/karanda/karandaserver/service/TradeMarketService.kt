@@ -1,265 +1,240 @@
 package kr.karanda.karandaserver.service
 
-import kr.karanda.karandaserver.data.MarketItem
-import kr.karanda.karandaserver.data.MarketWaitItem
+import com.sun.org.slf4j.internal.Logger
+import com.sun.org.slf4j.internal.LoggerFactory
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kr.karanda.karandaserver.api.TradeMarketApi
+import kr.karanda.karandaserver.dto.MarketItem
+import kr.karanda.karandaserver.dto.MarketWaitItem
 import kr.karanda.karandaserver.dto.BDOItem
 import kr.karanda.karandaserver.entity.MarketData
+import kr.karanda.karandaserver.enums.BDORegion
+import kr.karanda.karandaserver.exception.InvalidArgumentException
 import kr.karanda.karandaserver.repository.jpa.BDOItemRepository
-import kr.karanda.karandaserver.repository.BDOTradeMarketRepository
+import kr.karanda.karandaserver.repository.SynchronizationDataRepository
 import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
 import kr.karanda.karandaserver.util.difference
 import kr.karanda.karandaserver.util.isSameDayAs
 import kr.karanda.karandaserver.util.toMidnight
-import org.springframework.cache.annotation.Cacheable
-import org.springframework.context.annotation.DependsOn
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
-import java.time.ZoneId
 import java.time.ZonedDateTime
 
 @Service
-@DependsOn("TradeMarketAsyncService")
 class TradeMarketService(
-    val asyncService: TradeMarketAsyncService,
-    val bdoTradeMarketRepository: BDOTradeMarketRepository,
+    val tradeMarketApi: TradeMarketApi,
     val bdoItemRepository: BDOItemRepository,
-    val marketDataRepository: MarketDataRepository
+    val marketDataRepository: MarketDataRepository,
+    val synchronizationDataRepository: SynchronizationDataRepository,
+    val messagingTemplate: SimpMessagingTemplate
 ) {
 
-    @Cacheable(cacheNames = ["TradeMarketWaitList"])
-    fun getWaitList(): List<MarketWaitItem> {
-        return bdoTradeMarketRepository.getWaitList()
+    val logger: Logger = LoggerFactory.getLogger(TradeMarketService::class.java)
+
+    fun getWaitList(region: BDORegion): List<MarketWaitItem> {
+        return tradeMarketApi.getWaitList(region)
     }
 
-    fun getLatest(target: List<Int>): List<MarketItem> {
-        val itemData = getTradeAbleItems(target)
-        val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
-        val itemsNeedInit = mutableListOf<BDOItem>()
-        val itemsNeedUpdate = mutableListOf<BDOItem>()
-        val entitiesNeedUpdate = mutableListOf<MarketData>()
-
-        val data = marketDataRepository
-            .findAllByItemNumIsInAndDateIsAfter(itemData.map { it.itemNum }, now.toMidnight())
-            .toMutableList()
-
-        if (data.isEmpty()) {
-            itemsNeedInit.addAll(itemData)
-        } else {
-            val grouped = data.groupBy { it.itemNum }
-            for (item in itemData) {
-                if (!grouped.containsKey(item.itemNum)) {
-                    itemsNeedInit.add(item)
-                }
-            }
-            for (key in grouped.keys) {
-                for (price in grouped[key]!!) {
-                    if (now.difference(price.date).toMinutes() > 15) {
-                        itemsNeedUpdate.add(itemData.single { it.itemNum == price.itemNum })
-                        entitiesNeedUpdate.addAll(grouped[key]!!)
-                        data.removeAll(grouped[key]!!)
-                        break
-                    }
-                }
-            }
-        }
-
-        val result = data.map { it.toDTO() }.toMutableList()
-
-        if (itemsNeedInit.isNotEmpty() || itemsNeedUpdate.isNotEmpty()) {
-            val init = mutableListOf<MarketItem>()
-            val enhanceAbleItems =
-                (itemsNeedInit + itemsNeedUpdate).filter { it.maxEnhancementLevel == 0 }.map { it.itemNum.toString() }
-            val nonEnhanceAbleItems =
-                (itemsNeedInit + itemsNeedUpdate).filter { it.maxEnhancementLevel != 0 }.map { it.itemNum }
-            val latest = mutableListOf<MarketItem>()
-
-            if (enhanceAbleItems.isNotEmpty()) {
-                latest.addAll(bdoTradeMarketRepository.getSearchList(items = enhanceAbleItems))
-            }
-            if (nonEnhanceAbleItems.isNotEmpty()) {
-                for (key in nonEnhanceAbleItems) {
-                    latest.addAll(bdoTradeMarketRepository.getSubList(mainKey = key))
-                }
-            }
-
-            for (item in latest) {
-                if (itemsNeedInit.any { bdoItem -> bdoItem.itemNum == item.itemNum }) {
-                    init.add(item)
-                } else {
-                    entitiesNeedUpdate.find { bdoItem -> bdoItem.itemNum == item.itemNum && bdoItem.enhancementLevel == item.enhancementLevel }
-                        ?.let { marketData ->
-                            marketData.date = now
-                            marketData.price = item.price
-                            marketData.cumulativeVolume = item.cumulativeVolume
-                            marketData.currentStock = item.currentStock
-                        }
-                }
-            }
-
-            if (init.isNotEmpty()) {
-                asyncService.createMarketData(init)
-                result.addAll(init)
-            }
-
-            if (entitiesNeedUpdate.isNotEmpty()) {
-                asyncService.updateMarketData(entitiesNeedUpdate)
-                result.addAll(entitiesNeedUpdate.map { it.toDTO() })
-            }
-        }
-
-        return result
-    }
-
-    fun getMarketDataList(itemNum: Int): List<MarketItem> {
-        getTradeAbleItem(itemNum)
-        val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
-        val data = marketDataRepository.findAllByItemNumOrderByDateDesc(itemNum = itemNum)
-        if (data.isEmpty() || !now.isSameDayAs(data.first().date)) {    //데이터가 없거나 날짜가 지남
-            val result = data.map { it.toDTO() }.toMutableList()
-            val latest = bdoTradeMarketRepository.getSubList(itemNum)
-            asyncService.createMarketData(latest)
-            result.addAll(latest)
-            result.sortBy { it.date }
-            return result
-        } else if (now.difference(data.first().date).toMinutes() > 15) {    // 15분 이상 지남
-            val latestData = bdoTradeMarketRepository.getSubList(itemNum)
-            val update = mutableListOf<MarketData>()
-            for (latest in latestData) {
-                data.find {
-                    it.itemNum == latest.itemNum &&
-                            it.enhancementLevel == latest.enhancementLevel &&
-                            it.date.isSameDayAs(latest.date!!)
-                }?.let {
-                    it.price = latest.price
-                    it.cumulativeVolume = latest.cumulativeVolume
-                    it.currentStock = latest.currentStock
-                    it.date = latest.date!!
-                    update.add(it)
-                }
-            }
-            asyncService.updateMarketData(update)
-        }
-        return data.map { it.toDTO() }
-    }
-
-    /*
-    * parameter = updated item id at last time
-    * return = updated item id in this time
-    */
-    fun updateNextItem(lastUpdated: Int): Int {
-        val item = bdoItemRepository.findFirstByIdGreaterThanAndTradeAble(id = lastUpdated, tradeAble = true)
-            ?: bdoItemRepository.findFirstByTradeAble(tradeAble = true)
-        if (item == null) {
-            return -1
-        }
-        val now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
-        val data = marketDataRepository.findAllByItemNumAndDateIsAfterOrderByDateDesc(
-            itemNum = item.itemNum,
-            date = now.minusDays(95)
-        )
-            .groupBy { it.enhancementLevel }
-            .toMutableMap()
-        val create = mutableListOf<MarketData>()
-        val update = mutableListOf<MarketData>()
-
-        // update today data
-        val latestData = bdoTradeMarketRepository.getSubList(item.itemNum)
-        for (latest in latestData) {
-            if (!data.containsKey(latest.enhancementLevel)) {
-                val newEntity = MarketData(
-                    itemNum = item.itemNum,
-                    enhancementLevel = latest.enhancementLevel,
-                    price = latest.price,
-                    cumulativeVolume = latest.cumulativeVolume,
-                    currentStock = latest.currentStock,
-                    date = latest.date!!
-                )
-                data[latest.enhancementLevel] = listOf(newEntity)
-                create.add(newEntity)
-            }
-            if (now.isSameDayAs(data[latest.enhancementLevel]?.first()!!.date)) {
-                val today = data[latest.enhancementLevel]?.first()!!
-                today.cumulativeVolume = latest.cumulativeVolume
-                today.currentStock = latest.currentStock
-                today.date = latest.date!!
-                update.add(today)
-            } else {
-                val newEntity = MarketData(
-                    itemNum = item.itemNum,
-                    enhancementLevel = latest.enhancementLevel,
-                    price = latest.price,
-                    cumulativeVolume = latest.cumulativeVolume,
-                    currentStock = latest.currentStock,
-                    date = latest.date!!
-                )
-                create.add(newEntity)
-            }
-        }
-
-        //update price data
-        for (enhancementLevel in data.keys) {
-            val priceData = bdoTradeMarketRepository.getPriceInfo(mainKey = item.itemNum, subKey = enhancementLevel)
-            for (i in 1 until priceData.size) {
-                val targetDate = now.minusDays(i.toLong())
-                val target = data[enhancementLevel]?.find { targetDate.isSameDayAs(it.date) }
-                if (target == null) {
-                    val near = data[enhancementLevel]?.find { targetDate.isAfter(it.date) }
-                    val newEntity = MarketData(
-                        itemNum = item.itemNum,
-                        enhancementLevel = enhancementLevel,
-                        price = priceData[i],
-                        cumulativeVolume = near?.cumulativeVolume ?: 0,
-                        currentStock = near?.currentStock ?: 0,
-                        date = targetDate.toMidnight()
-                    )
-                    create.add(newEntity)
-                } else if (target.price != priceData[i]) {
-                    target.price = priceData[i]
-                    target.date = targetDate.toMidnight()
-                    update.add(target)
-                }
-            }
-        }
-
-        marketDataRepository.saveAll(create)
-        marketDataRepository.saveAll(update)
-        marketDataRepository.flush()
-
-        return item.id!!
-    }
-
-    fun getTradeAbleItems(target: List<Int>): List<BDOItem> {
-        return bdoItemRepository.findByItemNumIsInAndTradeAble(itemNums = target.distinct(), tradeAble = true)
-            .map { it.toDTO() }
-    }
-
-    fun getTradeAbleItem(target: Int): BDOItem? {
-        return bdoItemRepository.findByItemNumAndTradeAble(itemNum = target, tradeAble = true)?.toDTO()
-    }
-}
-
-@Service("TradeMarketAsyncService")
-class TradeMarketAsyncService(
-    val marketDataRepository: MarketDataRepository
-) {
     @Async
-    fun createMarketData(data: List<MarketItem>) {
-        val newEntities = data.map {
-            MarketData(
-                itemNum = it.itemNum,
-                enhancementLevel = it.enhancementLevel,
-                price = it.price,
-                cumulativeVolume = it.cumulativeVolume,
-                currentStock = it.currentStock,
-                date = it.date!!
+    fun publishWaitList() {
+        for (region in BDORegion.entries) {
+            try {
+                tradeMarketApi.getWaitList(region).let {
+                    messagingTemplate.convertAndSend(
+                        "/live-data/trade-market/${region.name}/wait-list",
+                        Json.encodeToString(it)
+                    )
+                }
+            } catch (e: Exception) {
+                logger.error("Fetching a waiting item failed #${region.name}", e)
+            }
+        }
+    }
+
+    fun updateLatestPriceData() {
+        val lastUpdated = synchronizationDataRepository.getTradeMarketLastUpdated()
+        val item = bdoItemRepository.findFirstByIdGreaterThanAndTradeAble(id = lastUpdated, tradeAble = true)?.toDTO()
+            ?: bdoItemRepository.findFirstByTradeAble(tradeAble = true)?.toDTO()
+        if (item != null) {
+            for (region in BDORegion.entries) {
+                try {
+                    updateLatestPrice(item = item, region = region)
+                } catch (e: Exception) {
+                    logger.error("Updating latest price failed #${region.name}", e)
+                }
+            }
+            synchronizationDataRepository.setTradeMarketLastUpdated(item.itemNum)
+        } else {
+            synchronizationDataRepository.setTradeMarketLastUpdated(-1)
+        }
+    }
+
+    @Async
+    fun updateLatestPrice(item: BDOItem, region: BDORegion) {
+        val now = ZonedDateTime.now(region.timezone)
+        val data = marketDataRepository.findAllByItemNumAndRegionAndDateIsAfterOrderByDateDesc(
+            itemNum = item.itemNum,
+            region = region.name,
+            date = now.toMidnight()
+        ).toMutableList()
+        val priceData = tradeMarketApi.getSubList(item.itemNum, region)
+        for (latest in priceData) {
+            data.find { it.enhancementLevel == latest.enhancementLevel }?.apply {
+                this.cumulativeVolume = latest.cumulativeVolume
+                this.currentStock = latest.currentStock
+                this.price = latest.price
+                this.date = now
+            } ?: data.add(
+                MarketData(
+                    itemNum = item.itemNum,
+                    enhancementLevel = latest.enhancementLevel,
+                    price = latest.price,
+                    cumulativeVolume = latest.cumulativeVolume,
+                    currentStock = latest.currentStock,
+                    date = now,
+                    region = region.name,
+                )
             )
         }
-        marketDataRepository.saveAll(newEntities)
+        marketDataRepository.saveAll(data)
+    }
+
+    fun updateHistoricalPriceData() {
+        val lastUpdated = synchronizationDataRepository.getTradeMarketPriceLastUpdated()
+        val item = bdoItemRepository.findFirstByIdGreaterThanAndTradeAble(id = lastUpdated, tradeAble = true)?.toDTO()
+            ?: bdoItemRepository.findFirstByTradeAble(tradeAble = true)?.toDTO()
+        if (item != null) {
+            for (region in BDORegion.entries) {
+                updateHistoricalPrice(item = item, region = region)
+            }
+            synchronizationDataRepository.setTradeMarketPriceLastUpdated(item.itemNum)
+        } else {
+            synchronizationDataRepository.setTradeMarketPriceLastUpdated(-1)
+        }
     }
 
     @Async
-    fun updateMarketData(data: List<MarketData>) {
-        marketDataRepository.saveAll(data)
-        marketDataRepository.flush()
+    fun updateHistoricalPrice(item: BDOItem, region: BDORegion) {
+        val now = ZonedDateTime.now(region.timezone)
+        val data: MutableMap<Int, MutableList<MarketData>> = mutableMapOf()
+        marketDataRepository.findAllByItemNumAndRegionAndDateIsAfterOrderByDateDesc(
+            itemNum = item.itemNum,
+            region = region.name,
+            date = now.minusDays(95)
+        ).groupByTo(data) { it.enhancementLevel }
+        for (enhancementLevel in data.keys) {
+            val priceData = tradeMarketApi.getPriceInfo(item.itemNum, enhancementLevel, region)
+            for (index in 1 until priceData.size) {
+                val targetDate = now.minusDays(index.toLong()).toMidnight()
+                val target = data[enhancementLevel]?.find { it.date.isSameDayAs(targetDate) }
+                if (target == null) {
+                    val near = data[enhancementLevel]?.find { it.date.isBefore(targetDate) }
+                    data[enhancementLevel]?.add(
+                        MarketData(
+                            itemNum = item.itemNum,
+                            enhancementLevel = enhancementLevel,
+                            price = priceData[index],
+                            cumulativeVolume = near?.cumulativeVolume ?: 0,
+                            currentStock = near?.currentStock ?: 0,
+                            date = targetDate,
+                            region = region.name
+                        )
+                    )
+                } else if (target.price != priceData[index]) {
+                    target.price = priceData[index]
+                    target.date = targetDate
+                }
+            }
+
+        }
+        marketDataRepository.saveAll(data.values.flatten())
+    }
+
+    fun getLatestPriceData(target: List<Int>, region: BDORegion): List<MarketItem> {
+        val now = ZonedDateTime.now(region.timezone)
+        val items = bdoItemRepository.findAllByItemNumIsInAndTradeAble(target, tradeAble = true).map { it.toDTO() }
+        val data: MutableMap<Int, MutableList<MarketData>> = mutableMapOf()
+        marketDataRepository.findAllByItemNumIsInAndRegionAndDateIsAfter(
+            itemNums = items.map { it.itemNum },
+            region = region.name,
+            date = now.toMidnight()
+        ).groupByTo(data) { it.itemNum }
+
+        val needUpdateItems = items.filter {
+            !data.containsKey(it.itemNum) || data[it.itemNum]?.any { item ->
+                now.difference(item.date).toMinutes() > 15
+            } ?: false
+        }
+
+        val latestData: MutableList<MarketItem> =
+            tradeMarketApi.getSearchList(items = needUpdateItems.filter { it.maxEnhancementLevel == 0 }
+                .map { it.itemNum.toString() }, region = region).toMutableList()
+
+        for (item in needUpdateItems.filter { it.maxEnhancementLevel != 0 }) {
+            latestData.addAll(tradeMarketApi.getSubList(mainKey = item.itemNum, region = region))
+        }
+
+        for (latest in latestData) {
+            if (!data.containsKey(latest.itemNum)) {
+                data[latest.itemNum] = mutableListOf()
+            }
+            data[latest.itemNum]?.find {
+                it.enhancementLevel == latest.enhancementLevel
+            }?.apply {
+                price = latest.price
+                cumulativeVolume = latest.cumulativeVolume
+                currentStock = latest.currentStock
+                date = now
+            } ?: data[latest.itemNum]?.add(
+                MarketData(
+                    itemNum = latest.itemNum,
+                    enhancementLevel = latest.enhancementLevel,
+                    price = latest.price,
+                    cumulativeVolume = latest.cumulativeVolume,
+                    currentStock = latest.currentStock,
+                    date = now,
+                    region = region.name
+                )
+            )
+        }
+
+        return marketDataRepository.saveAll(data.values.flatten()).map { it.toDTO() }
+    }
+
+    fun getPriceDetail(itemNum: Int, region: BDORegion): List<MarketItem> {
+        val now = ZonedDateTime.now(region.timezone)
+        val item = bdoItemRepository.findByItemNumAndTradeAble(itemNum = itemNum, tradeAble = true)?.toDTO()
+            ?: throw InvalidArgumentException()
+        val data = marketDataRepository.findAllByItemNumAndRegionOrderByDateDesc(item.itemNum, region.name)
+            .toMutableList()
+
+        if (data.isEmpty() || !now.isSameDayAs(data.first().date)) {    //데이터가 없거나 날짜가 지남
+            tradeMarketApi.getSubList(item.itemNum, region).map {
+                MarketData(
+                    itemNum = it.itemNum,
+                    enhancementLevel = it.enhancementLevel,
+                    currentStock = it.currentStock,
+                    cumulativeVolume = it.cumulativeVolume,
+                    price = it.price,
+                    date = now,
+                    region = region.name
+                )
+            }.let { data.addAll(it) }
+            marketDataRepository.saveAll(data)
+        } else if (now.difference(data.first().date).toMinutes() > 15) {    //15분 이상 지남
+            val latestData = tradeMarketApi.getSubList(item.itemNum, region)
+            for (latest in latestData) {
+                data.find { now.isSameDayAs(it.date) && it.enhancementLevel == latest.enhancementLevel }?.apply {
+                    currentStock = latest.currentStock
+                    cumulativeVolume = latest.cumulativeVolume
+                    price = latest.price
+                    date = now
+                }
+            }
+        }
+
+        return data.map { it.toDTO() }
     }
 }

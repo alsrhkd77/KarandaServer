@@ -18,7 +18,7 @@ class CaffeineCacheConfiguration {
         val caffeineCacheManager = CaffeineCacheManager()
         caffeineCacheManager.registerCustomCache(
             "TradeMarketWaitList",
-            buildCacheConfig(expire = 30, initialCapacity = 1, maximumSize = 1)
+            buildCacheConfig(expire = 29, initialCapacity = 1, maximumSize = 1)
         )
         return caffeineCacheManager
     }
