@@ -7,12 +7,12 @@ import kr.karanda.karandaserver.dto.Applicant as ApplicantDTO
 import kr.karanda.karandaserver.entity.Applicant as ApplicantEntity
 import kr.karanda.karandaserver.dto.RecruitmentPost as RecruitmentPostDTO
 import kr.karanda.karandaserver.entity.RecruitmentPost as RecruitmentPostEntity
-import kr.karanda.karandaserver.exception.UnknownUser
+import kr.karanda.karandaserver.exception.UnknownUserException
 import kr.karanda.karandaserver.repository.jpa.ApplicantRepository
 import kr.karanda.karandaserver.repository.jpa.RecruitmentPostRepository
 import kr.karanda.karandaserver.repository.SynchronizationDataRepository
 import kr.karanda.karandaserver.repository.jpa.UserRepository
-import kr.karanda.karandaserver.util.RandomCodeFactory
+import kr.karanda.karandaserver.util.RandomCodeUtils
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.ZoneId
@@ -27,7 +27,7 @@ class AdventurerHubService(
 ) {
     /* return post id */
     fun createNewPost(uuid: String, data: RecruitmentPostDTO): RecruitmentPostDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         var post = RecruitmentPostEntity(
             title = data.title,
             region = data.region,
@@ -50,7 +50,7 @@ class AdventurerHubService(
     }
 
     fun updatePost(uuid: String, data: RecruitmentPostDTO): RecruitmentPostDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         val post = data.id?.let { recruitmentPostRepository.findByIdAndAuthor_UserUUID(id = it, uuid = user.userUUID) }
             ?: throw Exception("Post not found")
         post.title = data.title
@@ -77,7 +77,7 @@ class AdventurerHubService(
         val post = recruitmentPostRepository.findByIdOrNull(postId) ?: throw Exception()
         val result = post.toDTO()
         if (uuid != null) {
-            val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+            val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
             if (post.applicants.any { it.owner.id == user.id }) {
                 val applicant = post.applicants.first { it.owner.id == user.id }.toDTO()
                 result.applicant = applicant
@@ -96,7 +96,7 @@ class AdventurerHubService(
     }
 
     fun getPostApplicant(postId: Long, uuid: String): ApplicantDTO? {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         return applicantRepository.findByPost_IdAndOwner_Id(postId = postId, ownerId = user.id!!)?.toDTO()
     }
 
@@ -111,7 +111,7 @@ class AdventurerHubService(
     }
 
     fun openPost(postId: Long, uuid: String): RecruitmentPostDTO {
-        val posts = userRepository.findByUserUUID(uuid)?.recruitmentPost ?: throw UnknownUser()
+        val posts = userRepository.findByUserUUID(uuid)?.recruitmentPost ?: throw UnknownUserException()
         //if (posts.any { it.status }) {
         if (false) {
             // Cannot open multiple posts
@@ -153,7 +153,7 @@ class AdventurerHubService(
     }
 
     fun applyToPost(postId: Long, uuid: String): ApplicantDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         val post = recruitmentPostRepository.findByIdOrNull(postId) ?: throw Exception()
 
         if (!post.status) {
@@ -186,7 +186,7 @@ class AdventurerHubService(
     }
 
     fun cancelToPost(postId: Long, uuid: String): ApplicantDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         val applicant =
             applicantRepository.findByPost_IdAndOwner_Id(postId = postId, ownerId = user.id!!) ?: throw Exception()
         if (applicant.canceledAt != null) {
@@ -214,7 +214,7 @@ class AdventurerHubService(
     }
 
     fun approveApplicant(postId: Long, applicantId: String, uuid: String): ApplicantDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         val post = recruitmentPostRepository.findByIdOrNull(postId) ?: throw Exception()
         val applicant = applicantRepository.findByPost_IdAndOwner_DiscordIdAndPost_Author_Id(
             postId = postId,
@@ -247,7 +247,7 @@ class AdventurerHubService(
     }
 
     fun rejectApplicant(postId: Long, applicantId: String, reason: String, uuid: String): ApplicantDTO {
-        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUser()
+        val user = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         val applicant = applicantRepository.findByPost_IdAndOwner_DiscordIdAndPost_Author_Id(
             postId = postId,
             ownerDiscordId = applicantId,
@@ -271,7 +271,7 @@ class AdventurerHubService(
     }
 
     private fun generateReservationCode(postId: Long): String {
-        val code = RandomCodeFactory().generate(5)
+        val code = RandomCodeUtils().generate(5)
         return if (applicantRepository.existsByCodeAndPost_Id(code, postId)) {
             generateReservationCode(postId)
         } else {

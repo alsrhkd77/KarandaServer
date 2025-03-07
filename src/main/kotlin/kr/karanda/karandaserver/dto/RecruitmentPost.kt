@@ -1,7 +1,6 @@
 package kr.karanda.karandaserver.dto
 
 import jakarta.persistence.Column
-import kr.karanda.karandaserver.data.SimplifiedRecruitmentPost
 import java.time.ZonedDateTime
 
 data class RecruitmentPost(
@@ -21,7 +20,7 @@ data class RecruitmentPost(
     var discordLink: String?,
     var showContentAfterJoin: Boolean?,
     var blinded: Boolean = false,
-    var author: User?,
+    var author: UserDTO?,
     var applicant: Applicant? = null,
 ) {
     fun simplify(): SimplifiedRecruitmentPost {

@@ -2,10 +2,10 @@ package kr.karanda.karandaserver.repository
 
 import com.google.cloud.firestore.DocumentSnapshot
 import com.google.cloud.firestore.Firestore
-import kr.karanda.karandaserver.data.DiscordProperties
-import kr.karanda.karandaserver.data.SafeBrowsingApiProperties
-import kr.karanda.karandaserver.data.TokenProperties
-import kr.karanda.karandaserver.data.TradeMarketProperties
+import kr.karanda.karandaserver.dto.DiscordProperties
+import kr.karanda.karandaserver.dto.SafeBrowsingApiProperties
+import kr.karanda.karandaserver.dto.TokenProperties
+import kr.karanda.karandaserver.dto.TradeMarketProperties
 import org.springframework.stereotype.Repository
 
 @Repository

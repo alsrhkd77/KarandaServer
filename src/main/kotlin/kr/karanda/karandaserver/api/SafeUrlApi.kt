@@ -1,13 +1,20 @@
-package kr.karanda.karandaserver.repository
+package kr.karanda.karandaserver.api
 
 import jakarta.annotation.PostConstruct
-import kr.karanda.karandaserver.data.SafeBrowsingApiProperties
+import kr.karanda.karandaserver.dto.SafeBrowsingApiProperties
+import kr.karanda.karandaserver.repository.DefaultDataRepository
 import org.springframework.http.MediaType.APPLICATION_JSON
-import org.springframework.stereotype.Repository
+import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
-@Repository
-class SafeUrlRepository(private val defaultDataRepository: DefaultDataRepository) {
+/**
+ * **Safe Browsing Api** 사용 클래스
+ * 유해 URL 확인을 위해 사용
+ *
+ * V5 문서가 완성되면 마이그레이션 해야할 수 있음.
+ */
+@Component
+class SafeUrlApi(private val defaultDataRepository: DefaultDataRepository) {
     private lateinit var client: RestClient
 
     val properties: SafeBrowsingApiProperties
@@ -21,6 +28,12 @@ class SafeUrlRepository(private val defaultDataRepository: DefaultDataRepository
             .build()
     }
 
+    /**
+     * URL들을 확인하고 안전하지 않은 URL들을 반환.
+     *
+     * @param [urls] 확인할 URL 목록.
+     * @return 안전하지 않은 URL 목록.
+     */
     fun check(urls: List<String>): List<String> {
         val payload = mapOf(
             "client" to mapOf(

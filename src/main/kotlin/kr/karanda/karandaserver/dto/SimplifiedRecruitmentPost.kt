@@ -1,7 +1,6 @@
-package kr.karanda.karandaserver.data
+package kr.karanda.karandaserver.dto
 
 import kotlinx.serialization.Serializable
-import kr.karanda.karandaserver.dto.User
 import kr.karanda.karandaserver.util.ZonedDateTimeSerializer
 import java.time.ZonedDateTime
 
@@ -23,5 +22,5 @@ data class SimplifiedRecruitmentPost(
     //var discordLink: String?,
     var showContentAfterJoin: Boolean?,
     var blinded: Boolean = false,
-    var author: User,
+    var author: UserDTO,
 )

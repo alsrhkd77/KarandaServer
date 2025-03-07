@@ -1,6 +1,6 @@
-package kr.karanda.karandaserver.data
+package kr.karanda.karandaserver.dto
 
-data class DiscordUserDataResponse(
+data class DiscordUserData(
     val id: String,
     val username: String,
     val discriminator: String,

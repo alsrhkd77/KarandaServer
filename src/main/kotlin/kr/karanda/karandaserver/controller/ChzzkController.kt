@@ -23,4 +23,4 @@ class ChzzkController {
 
 }
 
-data class Chzzk(val code: Int, val message: String?, val content: Map<String, Any>)
+private data class Chzzk(val code: Int, val message: String?, val content: Map<String, Any>)

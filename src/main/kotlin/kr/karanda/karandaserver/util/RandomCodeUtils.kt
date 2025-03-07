@@ -1,6 +1,6 @@
 package kr.karanda.karandaserver.util
 
-class RandomCodeFactory{
+class RandomCodeUtils{
 
     private val numbers = ('1'..'9')
     private val lowerCase = ('a'..'z')

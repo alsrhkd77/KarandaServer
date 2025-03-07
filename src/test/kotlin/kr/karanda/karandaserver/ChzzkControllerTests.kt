@@ -1,7 +1,7 @@
 package kr.karanda.karandaserver
 
 import kr.karanda.karandaserver.controller.ChzzkController
-import kr.karanda.karandaserver.util.TokenFactory
+import kr.karanda.karandaserver.util.TokenUtils
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,7 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 class ChzzkControllerTests {
 
     @Autowired
-    private lateinit var tokenFactory: TokenFactory
+    private lateinit var tokenUtils: TokenUtils
     private lateinit var client: WebTestClient
 
     @BeforeEach
@@ -20,7 +20,7 @@ class ChzzkControllerTests {
         client = WebTestClient.bindToController(ChzzkController())
             .configureClient()
             .baseUrl("/chzzk")
-            .defaultHeader("Qualification", tokenFactory.createQualificationToken())
+            .defaultHeader("Qualification", tokenUtils.createQualificationToken())
             .build()
     }
 

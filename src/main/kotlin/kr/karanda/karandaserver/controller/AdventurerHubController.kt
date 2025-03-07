@@ -2,7 +2,7 @@ package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
-import kr.karanda.karandaserver.data.SimplifiedRecruitmentPost
+import kr.karanda.karandaserver.dto.SimplifiedRecruitmentPost
 import kr.karanda.karandaserver.dto.Applicant
 import kr.karanda.karandaserver.dto.RecruitmentPost
 import kr.karanda.karandaserver.dto.TokenClaims

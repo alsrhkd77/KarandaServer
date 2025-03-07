@@ -3,8 +3,18 @@ package kr.karanda.karandaserver.util
 import java.security.SecureRandom
 import java.util.*
 
-class UUIDFactory {
+/**
+ * Custom UUID 생성을 위한 클래스.
+ */
+class UUIDUtils {
 
+    /**
+     * Custom된 **UUID v1**을 생성.
+     *
+     * **UUID v1**과 같지만 MAC주소 대신 랜덤값 사용.
+     *
+     * @return [UUID]
+     */
     fun generateUUID1(): UUID {
         val most64SigBits = get64MostSignificantBitsForVersion1()
         val least64SigBits = get64LeastSignificantBitsForVersion1()

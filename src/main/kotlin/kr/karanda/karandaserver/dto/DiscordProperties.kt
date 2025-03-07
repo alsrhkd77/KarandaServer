@@ -1,4 +1,4 @@
-package kr.karanda.karandaserver.data
+package kr.karanda.karandaserver.dto
 
 data class DiscordProperties(
     var api: String = "",

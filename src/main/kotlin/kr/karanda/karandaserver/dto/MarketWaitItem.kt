@@ -1,4 +1,4 @@
-package kr.karanda.karandaserver.data
+package kr.karanda.karandaserver.dto
 
 import kotlinx.serialization.Serializable
 import kr.karanda.karandaserver.util.ZonedDateTimeSerializer

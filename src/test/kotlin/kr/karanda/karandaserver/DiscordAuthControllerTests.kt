@@ -1,11 +1,11 @@
 package kr.karanda.karandaserver
 
 import io.jsonwebtoken.Jwts
-import kr.karanda.karandaserver.data.TokenProperties
+import kr.karanda.karandaserver.dto.TokenProperties
+import kr.karanda.karandaserver.entity.User
 import kr.karanda.karandaserver.repository.DefaultDataRepository
 import kr.karanda.karandaserver.repository.jpa.UserRepository
-import kr.karanda.karandaserver.service.UserService
-import kr.karanda.karandaserver.util.TokenFactory
+import kr.karanda.karandaserver.util.TokenUtils
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,10 +27,7 @@ class DiscordAuthControllerTests {
 
 
     @Autowired
-    private lateinit var tokenFactory: TokenFactory
-
-    @Autowired
-    private lateinit var userService: UserService
+    private lateinit var tokenUtils: TokenUtils
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -42,13 +39,13 @@ class DiscordAuthControllerTests {
     private lateinit var wac: WebApplicationContext
 
     private lateinit var tokenProperties: TokenProperties
-    private lateinit var discordId: String
+    private lateinit var user: User
     private lateinit var client: WebTestClient
 
     @BeforeEach
     fun setUp() {
-        discordId = userRepository.findAll().first().discordId
-        println("discordId: $discordId")
+        user = userRepository.findAll().first()
+        println("discordId: ${user.discordId}")
         tokenProperties = defaultDataRepository.getTokenProperties()
         client = MockMvcWebTestClient.bindToApplicationContext(wac)
             //.baseUrl("http://localhost:8000")
@@ -58,8 +55,7 @@ class DiscordAuthControllerTests {
 
     @Test
     fun `Assert successful authentication`() {
-        val user = userService.getByDiscordId(discordId)
-        val token = tokenFactory.createTokens(user!!.userUUID, user.username)
+        val token = tokenUtils.createTokens(user.userUUID, user.userName)
         client.get().uri("/auth/discord/authorization")
             .header(HttpHeaders.AUTHORIZATION, "Bearer ${token.accessToken}")
             .exchange()
@@ -68,8 +64,7 @@ class DiscordAuthControllerTests {
 
     @Test
     fun `Assert authentication with expired token`() {
-        val user = userService.getByDiscordId(discordId)
-        val token = createExpiredAccessToken(user!!.userUUID, user.username)
+        val token = createExpiredAccessToken(user.userUUID, user.userName)
         client.get().uri("/auth/discord/authorization")
             .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
             .exchange()

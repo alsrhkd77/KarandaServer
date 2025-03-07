@@ -16,6 +16,6 @@ data class Applicant(
     @Serializable(with = ZonedDateTimeSerializer::class)
     val approvedAt: ZonedDateTime?,
     val reason: String?,
-    val user: User,
+    val user: UserDTO,
     val postId: Long
 )
