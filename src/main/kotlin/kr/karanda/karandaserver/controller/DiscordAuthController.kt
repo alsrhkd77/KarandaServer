@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.dto.RefreshTokenResponse
 import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.dto.UserDTO
-import kr.karanda.karandaserver.exception.InvalidArgumentException
 import kr.karanda.karandaserver.service.AuthService
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
