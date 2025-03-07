@@ -1,7 +1,7 @@
 package kr.karanda.karandaserver.configuration
 
 import kr.karanda.karandaserver.dto.TokenClaims
-import kr.karanda.karandaserver.util.TokenFactory
+import kr.karanda.karandaserver.util.TokenUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
@@ -64,7 +64,7 @@ class WebSocketConfiguration : WebSocketMessageBrokerConfigurer {
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 99)
-class WebSocketChannelInterceptor(val tokenFactory: TokenFactory) : ChannelInterceptor {
+class WebSocketChannelInterceptor(val tokenUtils: TokenUtils) : ChannelInterceptor {
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor::class.java) ?: return null
@@ -72,7 +72,7 @@ class WebSocketChannelInterceptor(val tokenFactory: TokenFactory) : ChannelInter
         //println(accessor.messageHeaders)
         if (StompCommand.CONNECT == accessor.command) {
             val qualification = accessor.getNativeHeader("Qualification")?.firstOrNull() ?: return null
-            return if (tokenFactory.validateQualificationToken(qualification)) {
+            return if (tokenUtils.validateQualificationToken(qualification)) {
                 message
             } else {
                 null
@@ -82,11 +82,11 @@ class WebSocketChannelInterceptor(val tokenFactory: TokenFactory) : ChannelInter
             val destination: String = accessor.destination ?: return null
             if (destination.contains("/user-private/")) {
                 val authorization = accessor.getNativeHeader("Authorization")?.firstOrNull() ?: return null
-                if (tokenFactory.validateAccessToken(authorization)) {
-                    val uuid = (tokenFactory.getAuthentication(authorization).principal as TokenClaims).userUUID
-                    accessor.destination = destination.replace("/user-private/", "/${uuid}/")
+                try {
+                    val authentication = tokenUtils.validateAccessToken(authorization).principal as TokenClaims
+                    accessor.destination = destination.replace("/user-private/", "/${authentication.userUUID}/")
                     return message
-                } else {
+                } catch (e: Exception) {
                     return null
                 }
             }

@@ -3,14 +3,14 @@ package kr.karanda.karandaserver.filter
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import kr.karanda.karandaserver.util.TokenFactory
+import kr.karanda.karandaserver.util.TokenUtils
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerRequestFilter() {
+class QualificationFilter(private val tokenUtils: TokenUtils) : OncePerRequestFilter() {
 
     val whiteList = listOf(
         "/docs",
@@ -26,26 +26,18 @@ class QualificationFilter(private val tokenFactory: TokenFactory) : OncePerReque
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        if(request.requestURI.contains("/live-data")) {
-            println(request.requestURL)
-            println(request.requestURI)
-            println(request.method)
-            println(request.headerNames.toList())
-        }
         var result = false
-        val headerName = request.headerNames.toList().find {
+
+        request.headerNames.toList().find {
             it.equals("qualification", ignoreCase = true)
+        }?.let { headerName ->
+            result = tokenUtils.validateQualificationToken(request.getHeader(headerName))
         }
-        if (headerName != null) {
-            val token: String = request.getHeader(headerName).replace("Bearer", "").trim()
-            tokenFactory.validateQualificationToken(token).apply {
-                result = this
-            }
-        }
+
         if (result) {
             filterChain.doFilter(request, response)
         } else {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden")
             return    //이후 로직 실행 없이 반환
         }
     }
