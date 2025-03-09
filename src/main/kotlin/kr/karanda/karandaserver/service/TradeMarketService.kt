@@ -1,7 +1,5 @@
 package kr.karanda.karandaserver.service
 
-import com.sun.org.slf4j.internal.Logger
-import com.sun.org.slf4j.internal.LoggerFactory
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kr.karanda.karandaserver.api.TradeMarketApi
@@ -17,6 +15,8 @@ import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
 import kr.karanda.karandaserver.util.difference
 import kr.karanda.karandaserver.util.isSameDayAs
 import kr.karanda.karandaserver.util.toMidnight
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service

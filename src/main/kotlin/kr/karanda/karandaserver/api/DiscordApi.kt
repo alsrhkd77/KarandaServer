@@ -1,11 +1,11 @@
 package kr.karanda.karandaserver.api
 
-import com.sun.org.slf4j.internal.Logger
-import com.sun.org.slf4j.internal.LoggerFactory
 import kr.karanda.karandaserver.dto.DiscordProperties
 import kr.karanda.karandaserver.dto.DiscordUserData
 import kr.karanda.karandaserver.exception.ExternalApiException
 import kr.karanda.karandaserver.repository.DefaultDataRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component

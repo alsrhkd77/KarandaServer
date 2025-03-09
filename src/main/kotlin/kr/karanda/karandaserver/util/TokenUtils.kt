@@ -1,7 +1,5 @@
 package kr.karanda.karandaserver.util
 
-import com.sun.org.slf4j.internal.Logger
-import com.sun.org.slf4j.internal.LoggerFactory
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
@@ -9,6 +7,8 @@ import kr.karanda.karandaserver.dto.TokenProperties
 import kr.karanda.karandaserver.dto.Tokens
 import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.repository.DefaultDataRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
