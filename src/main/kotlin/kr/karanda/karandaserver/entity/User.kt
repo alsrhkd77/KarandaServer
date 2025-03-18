@@ -2,7 +2,6 @@ package kr.karanda.karandaserver.entity
 
 import jakarta.persistence.*
 import kr.karanda.karandaserver.dto.UserDTO as UserDTO
-import kr.karanda.karandaserver.dto.TokenClaims as TokenClaims
 
 //https://discord.com/developers/docs/resources/user#get-current-user
 @Entity(name = "users")

@@ -1,7 +1,6 @@
 package kr.karanda.karandaserver.dto
 
 import kotlinx.serialization.Serializable
-import kr.karanda.karandaserver.dto.BDOFamilyDTO
 
 @Serializable
 data class UserDTO(
