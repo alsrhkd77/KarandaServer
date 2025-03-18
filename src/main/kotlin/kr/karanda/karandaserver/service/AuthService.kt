@@ -67,7 +67,7 @@ class AuthService(
             userUUID = UUIDUtils().generateUUID1().toString(),
             discordId = discordUserData.id,
             userName = discordUserData.username,
-            discriminator = discordUserData.discriminator,
+            discordDiscriminator = discordUserData.discriminator,
             avatarHash = discordUserData.avatar
         )
         return userRepository.saveAndFlush(user)

@@ -1,14 +1,9 @@
 package kr.karanda.karandaserver
 
-import kr.karanda.karandaserver.util.BDOWebParser
-import kr.karanda.karandaserver.util.difference
+import kr.karanda.karandaserver.util.WebUtils
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ContextConfiguration
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import kotlin.random.Random
 import kotlin.test.Test
-import kotlin.time.TimeSource
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(classes = [KarandaServerApplication::class])
@@ -22,15 +17,12 @@ class BDOFamilyVerificationTest {
 
     @Test
     fun `web parsing test`() {
-        val parser = BDOWebParser()
-        val data = parser.parseProfile(profileCode = codeList.random(Random(System.currentTimeMillis())), region = "KR")
+        val parser = WebUtils()
+        val data = parser.getAdventurerProfile(url = "")
         println(data.familyName)
         println(data.guild)
-        println(data.lifeSkillLevel)
         println(data.createdOn)
         println(data.mainClass)
         println(data.contributionPoints)
-        println(data.verificationOn)
-        println(data.highestLevel)
     }
 }

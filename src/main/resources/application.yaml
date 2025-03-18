@@ -21,6 +21,14 @@ server:
       charset: utf-8
       force: true
 
+# Custom Properties (Immutable data)
+karanda:
+  adventurer-profile-url-base:
+    kr: "https://www.kr.playblackdesert.com/ko-KR/Adventure/Profile"
+    na: "https://www.naeu.playblackdesert.com/en-US/Adventure/Profile"
+    eu: "https://www.naeu.playblackdesert.com/en-US/Adventure/Profile"
+    jp: "https://www.jp.playblackdesert.com/ja-JP/Adventure/Profile"
+
 ---
 # Production profile
 spring:
