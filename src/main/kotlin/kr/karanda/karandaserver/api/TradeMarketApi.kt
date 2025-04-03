@@ -31,7 +31,7 @@ class TradeMarketApi(private val defaultDataRepository: DefaultDataRepository) {
     val properties: TradeMarketProperties
         get() = defaultDataRepository.getTradeMarketProperties()
 
-    @Cacheable(cacheNames = ["TradeMarketWaitList"])
+    @Cacheable("TradeMarketWaitList")
     fun getWaitList(region: BDORegion): List<MarketWaitItem> {
         try {
             val uri = getBaseURL(region) + "/GetWorldMarketWaitList"

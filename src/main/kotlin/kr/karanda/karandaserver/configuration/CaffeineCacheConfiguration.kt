@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.configuration
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Scheduler
+import kr.karanda.karandaserver.enums.BDORegion
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.caffeine.CaffeineCacheManager
@@ -18,7 +19,11 @@ class CaffeineCacheConfiguration {
         val caffeineCacheManager = CaffeineCacheManager()
         caffeineCacheManager.registerCustomCache(
             "TradeMarketWaitList",
-            buildCacheConfig(expire = 29, initialCapacity = 1, maximumSize = 1)
+            buildCacheConfig(
+                expire = 29,
+                initialCapacity = BDORegion.entries.size,
+                maximumSize = BDORegion.entries.size.toLong()
+            )
         )
         return caffeineCacheManager
     }
