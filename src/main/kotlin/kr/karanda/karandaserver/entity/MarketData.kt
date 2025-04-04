@@ -11,10 +11,7 @@ import kr.karanda.karandaserver.enums.BDORegion
 import java.time.ZonedDateTime
 
 @Entity
-@Table(
-    name = "market_data",
-    indexes = [Index(name = "item_num_enhancement_level_date_idx", columnList = "item_num, enhancement_level, date")]
-)
+@Table(name = "market_data")
 class MarketData(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
