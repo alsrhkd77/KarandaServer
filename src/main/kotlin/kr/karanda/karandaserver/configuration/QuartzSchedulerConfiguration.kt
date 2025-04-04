@@ -36,7 +36,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
-    @Bean
+    /*@Bean
     fun marketHistoricalPriceDataUpdateJobDetail(): JobDetail {
         return JobBuilder
             .newJob(MarketHistoricalPriceDataUpdateJob::class.java)
@@ -55,7 +55,7 @@ class QuartzSchedulerConfiguration {
             .startNow()
             .withSchedule(simpleSchedule().withIntervalInSeconds(60).repeatForever())
             .build()
-    }
+    }*/
 
     @Bean
     fun publishMarketWaitListJobDetail(): JobDetail {
