@@ -7,13 +7,12 @@ import org.springframework.scheduling.quartz.QuartzJobBean
 import org.springframework.stereotype.Component
 
 @Component
-class MarketHistoricalPriceDataUpdateJob:QuartzJobBean() {
-
+class MarketCleanUpOldDataJob : QuartzJobBean() {
     @Autowired
     private var tradeMarketService: TradeMarketService? = null
 
-    override fun executeInternal(context: JobExecutionContext) {
-        tradeMarketService?.updateHistoricalPriceData()
-    }
 
+    override fun executeInternal(context: JobExecutionContext) {
+        tradeMarketService?.cleanUpOldData()
+    }
 }

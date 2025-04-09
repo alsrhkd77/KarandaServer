@@ -10,8 +10,8 @@ enum class BDORegion(val timezone: ZoneId) {
     KR(ZoneId.of("Asia/Seoul")),
 
     @SerialName("NA")
-    NA(ZoneId.of("UTC")),
+    NA(ZoneId.of("America/Los_Angeles")),
 
     @SerialName("EU")
-    EU(ZoneId.of("UTC"))
+    EU(ZoneId.of("Europe/Berlin"))
 }
