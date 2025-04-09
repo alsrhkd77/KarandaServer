@@ -12,6 +12,7 @@ import org.quartz.TriggerBuilder
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 
 @Configuration
 class QuartzSchedulerConfiguration {
@@ -85,7 +86,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
-    //@Profile("production")
+    @Profile("production")
     @Bean
     fun translateItemDataTrigger(@Qualifier("translateItemDataJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder
