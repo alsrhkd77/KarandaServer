@@ -12,7 +12,6 @@ import kr.karanda.karandaserver.exception.InvalidArgumentException
 import kr.karanda.karandaserver.repository.jpa.BDOItemRepository
 import kr.karanda.karandaserver.repository.SynchronizationDataRepository
 import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
-import kr.karanda.karandaserver.util.WebUtils
 import kr.karanda.karandaserver.util.difference
 import kr.karanda.karandaserver.util.isSameDayAs
 import kr.karanda.karandaserver.util.toMidnight
@@ -200,7 +199,6 @@ class TradeMarketService(
     fun update(){   //임시
         val item = bdoItemRepository.findFirstByItemNameEnIsNull()
         if(item != null && item.itemNameEn.isNullOrEmpty()){
-            println(item.itemNameKr)
             val data = tradeMarketApi.update(item.itemNum, item.itemNameKr)
             item.itemNameEn = data
             bdoItemRepository.save(item)
