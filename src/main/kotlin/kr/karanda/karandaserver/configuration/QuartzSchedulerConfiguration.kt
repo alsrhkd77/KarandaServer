@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.configuration
 import kr.karanda.karandaserver.quartz.MarketCleanUpOldDataJob
 import kr.karanda.karandaserver.quartz.MarketLatestPriceDataUpdateJob
 import kr.karanda.karandaserver.quartz.PublishMarketWaitListJob
+import kr.karanda.karandaserver.quartz.TranslateItemDataJob
 import org.quartz.JobBuilder
 import org.quartz.JobDetail
 import org.quartz.SimpleScheduleBuilder.simpleSchedule
@@ -72,6 +73,27 @@ class QuartzSchedulerConfiguration {
             .withIdentity("marketCleanUpOldDataTrigger", "tradeMarket")
             .startNow()
             .withSchedule(simpleSchedule().withIntervalInHours(24).repeatForever())
+            .build()
+    }
+
+    @Bean
+    fun translateItemDataJobDetail(): JobDetail {
+        return JobBuilder
+            .newJob(TranslateItemDataJob::class.java)
+            .withIdentity("translateItemDataJob", "tradeMarket")
+            .storeDurably()
+            .build()
+    }
+
+    //@Profile("production")
+    @Bean
+    fun translateItemDataTrigger(@Qualifier("translateItemDataJobDetail") jobDetail: JobDetail): Trigger {
+        return TriggerBuilder
+            .newTrigger()
+            .forJob(jobDetail)
+            .withIdentity("translateItemDataTrigger", "tradeMarket")
+            .startNow()
+            .withSchedule(simpleSchedule().withIntervalInMinutes(1).repeatForever())
             .build()
     }
 }

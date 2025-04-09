@@ -12,6 +12,7 @@ import kr.karanda.karandaserver.exception.InvalidArgumentException
 import kr.karanda.karandaserver.repository.jpa.BDOItemRepository
 import kr.karanda.karandaserver.repository.SynchronizationDataRepository
 import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
+import kr.karanda.karandaserver.util.WebUtils
 import kr.karanda.karandaserver.util.difference
 import kr.karanda.karandaserver.util.isSameDayAs
 import kr.karanda.karandaserver.util.toMidnight
@@ -193,6 +194,17 @@ class TradeMarketService(
         val now = ZonedDateTime.now(ZoneId.of("UTC"))
         val deleted = marketDataRepository.deleteAllByDateIsBefore(now.minusDays(100))
         logger.info("Deleted ${deleted.size} old price data.")
+    }
+
+    @Async
+    fun update(){   //임시
+        val lastUpdated = synchronizationDataRepository.getTradeMarketLastUpdated()
+        val item = bdoItemRepository.findByItemNum(lastUpdated)
+        if(item != null && item.itemNameEn.isNullOrEmpty()){
+            val data = tradeMarketApi.update(item.itemNum, item.itemNameKr)
+            item.itemNameEn = data
+            bdoItemRepository.save(item)
+        }
     }
 
     /*

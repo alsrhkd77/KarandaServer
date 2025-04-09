@@ -6,6 +6,7 @@ import kr.karanda.karandaserver.dto.TradeMarketProperties
 import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.exception.ExternalApiException
 import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.util.WebUtils
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -111,6 +112,10 @@ class TradeMarketApi(private val defaultDataRepository: DefaultDataRepository) {
         } catch (e: Exception) {
             throw ExternalApiException()
         }
+    }
+
+    fun update(target: Int, original: String): String {   //임시
+        return WebUtils().getItemName(url = "${properties.parse}${target}/", original = original)
     }
 
     private fun getBaseURL(region: BDORegion): String {

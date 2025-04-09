@@ -7,10 +7,12 @@ import org.springframework.scheduling.quartz.QuartzJobBean
 import org.springframework.stereotype.Component
 
 @Component
-class TranslateMarketDataJob:QuartzJobBean() {
+class TranslateItemDataJob:QuartzJobBean() {
+    @Autowired
+    private var tradeMarketService: TradeMarketService? = null
 
     override fun executeInternal(context: JobExecutionContext) {
-        TODO("Not yet implemented")
+        tradeMarketService?.update()
     }
 
 }

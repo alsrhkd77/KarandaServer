@@ -8,4 +8,5 @@ data class TradeMarketProperties(
     var jp: String = "",
     var headers: Map<String, String> = mutableMapOf(),
     var keyType: String = "",
+    var parse: String = "",
 )
