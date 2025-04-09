@@ -14,4 +14,5 @@ interface BDOItemRepository: JpaRepository<BDOItem, Long> {
     @Transactional(readOnly = true)
     fun findFirstByTradeAble(tradeAble: Boolean = true): BDOItem?
     fun findByItemNum(itemNum: Int): BDOItem?
+    fun findFirstByItemNameEnIsNull(): BDOItem?
 }

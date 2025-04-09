@@ -198,9 +198,9 @@ class TradeMarketService(
 
     @Async
     fun update(){   //임시
-        val lastUpdated = synchronizationDataRepository.getTradeMarketLastUpdated()
-        val item = bdoItemRepository.findByItemNum(lastUpdated)
+        val item = bdoItemRepository.findFirstByItemNameEnIsNull()
         if(item != null && item.itemNameEn.isNullOrEmpty()){
+            println(item.itemNameKr)
             val data = tradeMarketApi.update(item.itemNum, item.itemNameKr)
             item.itemNameEn = data
             bdoItemRepository.save(item)
