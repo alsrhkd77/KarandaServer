@@ -49,7 +49,7 @@ class TradeMarketService(
                     )
                 }
             } catch (e: Exception) {
-                logger.error("Fetching a waiting item failed #${region.name}", e)
+                logger.info("Fetching a waiting item failed #${region.name}")
             }
         }
     }
@@ -63,7 +63,7 @@ class TradeMarketService(
                 try {
                     updateLatestPrice(item = item, region = region)
                 } catch (e: Exception) {
-                    logger.error("Updating latest price failed #${region.name}", e)
+                    logger.info("Updating latest price failed #${region.name}")
                 }
             }
             synchronizationDataRepository.setTradeMarketLastUpdated(item.itemNum)
