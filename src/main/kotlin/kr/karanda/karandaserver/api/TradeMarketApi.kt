@@ -115,7 +115,11 @@ class TradeMarketApi(private val defaultDataRepository: DefaultDataRepository) {
     }
 
     fun update(target: Int, original: String): String {   //임시
-        return WebUtils().getItemName(url = "${properties.parse}${target}/", original = original)
+        return try {
+            WebUtils().getItemName(url = "${properties.parse}${target}/", original = original)
+        } catch (e: Exception) {
+            original
+        }
     }
 
     private fun getBaseURL(region: BDORegion): String {
