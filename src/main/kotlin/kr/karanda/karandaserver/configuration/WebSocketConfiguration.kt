@@ -80,7 +80,7 @@ class WebSocketChannelInterceptor(val tokenUtils: TokenUtils) : ChannelIntercept
         } else if (StompCommand.SUBSCRIBE == accessor.command) {
             //println("SUBSCRIBE ${accessor.destination}")
             val destination: String = accessor.destination ?: return null
-            if (destination.contains("/user-private/")) {
+            if (destination.contains("/user-private/") || destination.endsWith("/private")) {
                 val authorization = accessor.getNativeHeader("Authorization")?.firstOrNull() ?: return null
                 try {
                     val authentication = tokenUtils.validateAccessToken(authorization).principal as TokenClaims
