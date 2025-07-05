@@ -19,6 +19,7 @@ Spring Boot를 사용하였으며, Kotlin으로 작성
  - Cloud Build (GCP)
  - Cloud Run (GCP)
  - MariaDB (on GCP Compute Engine)
+ - Redis (on GCP Compute Engine)
 
 ## 참고
 개발 환경 실행 시 필요 요소
