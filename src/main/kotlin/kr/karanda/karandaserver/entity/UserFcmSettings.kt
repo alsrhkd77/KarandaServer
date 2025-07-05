@@ -12,7 +12,7 @@ class UserFcmSettings(
     var id: Long? = null,
     var token: String,
     var region: String,
-    var adventurerHub: Boolean = false,
+    var partyFinder: Boolean = false,
     var fieldBoss: Boolean = false,
     var lastUpdated: ZonedDateTime,
     @ManyToOne
@@ -22,7 +22,7 @@ class UserFcmSettings(
         return UserFcmSettingsDTO(
             token = token,
             region = BDORegion.valueOf(region),
-            adventurerHub = adventurerHub,
+            partyFinder = partyFinder,
             fieldBoss = fieldBoss,
         )
     }

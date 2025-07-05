@@ -7,6 +7,6 @@ import kr.karanda.karandaserver.enums.BDORegion
 data class UserFcmSettingsDTO(
     var token: String,
     var region: BDORegion,
-    var adventurerHub: Boolean = false,
+    var partyFinder: Boolean = false,
     var fieldBoss: Boolean = false,
 )

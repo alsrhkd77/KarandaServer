@@ -22,13 +22,13 @@ class FcmService(
     fun saveUserFcmSettings(userFcmSettings: UserFcmSettingsDTO, uuid: String): UserFcmSettingsDTO {
         val value = userFcmSettingsRepository.findByTokenAndOwner_UserUUID(userFcmSettings.token, uuid)?.apply {
             region = userFcmSettings.region.name
-            adventurerHub = userFcmSettings.adventurerHub
+            partyFinder = userFcmSettings.partyFinder
             fieldBoss = userFcmSettings.fieldBoss
             lastUpdated = ZonedDateTime.now(ZoneId.of("UTC"))
         } ?: UserFcmSettings(
             token = userFcmSettings.token,
             region = userFcmSettings.region.name,
-            adventurerHub = userFcmSettings.adventurerHub,
+            partyFinder = userFcmSettings.partyFinder,
             fieldBoss = userFcmSettings.fieldBoss,
             lastUpdated = ZonedDateTime.now(ZoneId.of("UTC")),
             owner = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
