@@ -127,7 +127,7 @@ class PartyFinderService(
                 broadcastMessages.add(BroadcastMessage.notifyRecruitmentPost(post.toDTO()))
                 if (post.category == "guildBossRaid") {
                     val fcm =
-                        userFcmSettingsRepository.findAllByRegionAndAdventurerHubIsTrue(post.region).map { it.toDTO() }
+                        userFcmSettingsRepository.findAllByRegionAndPartyFinderIsTrue(post.region).map { it.toDTO() }
                     val fcmMessage = MulticastMessage.builder()
                         .addAllTokens(fcm.map { it.token })
                         .setAndroidConfig(
