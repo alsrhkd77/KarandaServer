@@ -45,6 +45,14 @@ class DiscordAuthController(
         return ModelAndView("redirect:$frontUrl?token=$accessToken&&refresh-token=$refreshToken")
     }
 
+    @GetMapping("/authenticate/android")
+    @Operation(summary = "Authentication from Karanda android client")
+    fun authenticationFromAndroid(code: String, request: HttpServletRequest): ModelAndView {
+        val (accessToken, refreshToken) = authService.authenticate(code, request.requestURL.toString())
+        val frontUrl = "karanda://www.karanda.kr" + "/auth/authenticate"
+        return ModelAndView("redirect:$frontUrl?token=$accessToken&&refresh-token=$refreshToken")
+    }
+
     @GetMapping("/authorization")
     @Operation(summary = "Authorization with access token")
     fun authorization(): UserDTO {

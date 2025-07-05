@@ -7,5 +7,5 @@ data class UserDTO(
     var discordId: String = "",
     var username: String = "",
     var avatar: String? = null,
-    var mainFamily: BDOFamilyDTO? = null,
+    var bdoFamily: BDOFamilyDTO? = null,
 )

@@ -1,9 +1,9 @@
 package kr.karanda.karandaserver.configuration
 
-import kr.karanda.karandaserver.quartz.MarketCleanUpOldDataJob
-import kr.karanda.karandaserver.quartz.MarketLatestPriceDataUpdateJob
-import kr.karanda.karandaserver.quartz.PublishMarketWaitListJob
-import kr.karanda.karandaserver.quartz.TranslateItemDataJob
+import kr.karanda.karandaserver.infrastructure.quartz.MarketCleanUpOldDataJob
+import kr.karanda.karandaserver.infrastructure.quartz.MarketLatestPriceDataUpdateJob
+import kr.karanda.karandaserver.infrastructure.quartz.PublishMarketWaitListJob
+import kr.karanda.karandaserver.infrastructure.quartz.TranslateItemDataJob
 import org.quartz.JobBuilder
 import org.quartz.JobDetail
 import org.quartz.SimpleScheduleBuilder.simpleSchedule
@@ -25,7 +25,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
-    //@Profile("production")
+    @Profile("production")
     @Bean
     fun marketLatestPriceDataUpdateTrigger(@Qualifier("marketLatestPriceDataUpdateJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder
@@ -46,6 +46,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
+    @Profile("production")
     @Bean
     fun publishMarketWaitListTrigger(@Qualifier("publishMarketWaitListJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder
@@ -66,6 +67,7 @@ class QuartzSchedulerConfiguration {
             .build()
     }
 
+    @Profile("production")
     @Bean
     fun marketCleanUpOldDataTrigger(@Qualifier("marketCleanUpOldDataJobDetail") jobDetail: JobDetail): Trigger {
         return TriggerBuilder

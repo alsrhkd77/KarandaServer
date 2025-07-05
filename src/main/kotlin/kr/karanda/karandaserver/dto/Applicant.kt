@@ -8,14 +8,13 @@ import java.time.ZonedDateTime
 data class Applicant(
     val code: String?,
     @Serializable(with = ZonedDateTimeSerializer::class)
-    val appliedAt: ZonedDateTime,
+    val joinAt: ZonedDateTime,
     @Serializable(with = ZonedDateTimeSerializer::class)
-    val canceledAt: ZonedDateTime?,
+    val cancelledAt: ZonedDateTime?,
     @Serializable(with = ZonedDateTimeSerializer::class)
     val rejectedAt: ZonedDateTime?,
     @Serializable(with = ZonedDateTimeSerializer::class)
-    val approvedAt: ZonedDateTime?,
-    val reason: String?,
+    val acceptedAt: ZonedDateTime?,
     val user: UserDTO,
     val postId: Long
 )

@@ -1,9 +1,9 @@
 package kr.karanda.karandaserver.api
 
-import kr.karanda.karandaserver.dto.DiscordProperties
+import kr.karanda.karandaserver.dto.properties.DiscordProperties
 import kr.karanda.karandaserver.dto.DiscordUserData
 import kr.karanda.karandaserver.exception.ExternalApiException
-import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.repository.DefaultDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -17,20 +17,20 @@ import org.springframework.web.client.RestClient
  *
  * **Discord OAuth2**에 사용됨.
  *
- * @property [defaultDataRepository]
+ * @property [defaultDataProvider]
  * @property [logger]
  * @property [client]
  * @property [properties]
  *
- * @see [DefaultDataRepository]
+ * @see [DefaultDataProvider]
  */
 @Component
-class DiscordApi(private val defaultDataRepository: DefaultDataRepository) {
+class DiscordApi(private val defaultDataProvider: DefaultDataProvider) {
     val logger: Logger = LoggerFactory.getLogger(DiscordApi::class.java)
     private val client = RestClient.create(properties.api)
 
     private val properties: DiscordProperties
-        get() = defaultDataRepository.getDiscordProperties()
+        get() = defaultDataProvider.getDiscordProperties()
 
     /**
      * [code]를 **Discord Access Token**으로 교환.

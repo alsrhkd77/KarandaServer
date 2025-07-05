@@ -23,11 +23,11 @@ class User(
     @OneToMany(mappedBy = "owner")
     val applied: List<Applicant> = mutableListOf(),
 
-    @OneToMany(mappedBy = "owner", orphanRemoval = true)
-    val families: List<BDOFamily> = mutableListOf(),
+    //@OneToMany(mappedBy = "owner", orphanRemoval = true)
+    //val families: List<BDOFamily> = mutableListOf(),
 
-    @OneToOne(fetch = FetchType.EAGER)
-    var mainFamily: BDOFamily? = null,
+    @OneToOne(mappedBy = "owner", fetch = FetchType.EAGER, orphanRemoval = true)
+    var bdoFamily: BDOFamily? = null,
 
     @OneToMany(mappedBy = "owner", orphanRemoval = true)
     val fcmSettings: List<UserFcmSettings> = mutableListOf(),
@@ -39,7 +39,7 @@ class User(
             username = userName,
             avatar = avatarHash?.let { "https://cdn.discordapp.com/avatars/${discordId}/${it}.png" }
                 ?: "https://cdn.discordapp.com/embed/avatars/${embedded}.png",
-            mainFamily = mainFamily?.toDTO(),
+            bdoFamily = bdoFamily?.toDTO(),
         )
     }
 }

@@ -1,5 +1,6 @@
 package kr.karanda.karandaserver.service
 
+import jakarta.transaction.Transactional
 import kr.karanda.karandaserver.dto.BDOFamilyDTO
 import kr.karanda.karandaserver.dto.BDOFamilyVerificationDTO
 import kr.karanda.karandaserver.dto.UserDTO
@@ -65,6 +66,8 @@ class BDOFamilyService(
                     region = region.name,
                     familyName = it.familyName,
                     mainClass = it.mainClass,
+                    //guild = it.guild,
+                    //maxGearScore = it.maxGearScore,
                     owner = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
                 )
             ).toDTO()
@@ -94,7 +97,7 @@ class BDOFamilyService(
             verified = false,
             userUUID = uuid
         ) ?: throw UnknownUserException()
-        val verification = familyVerificationRepository.findByFamilyAndStartPointAndCreatedAtAfter(
+        val verification = familyVerificationRepository.findByFamilyAndStartPointAndCreatedAtAfterOrderByCreatedAtDesc(
             family = family,
             startPoint = true,
             createdAtAfter = now.minusMinutes(10)
@@ -105,7 +108,7 @@ class BDOFamilyService(
                     family = family,
                     createdAt = now,
                     startPoint = true,
-                    lifeSkillIsLocked = it.lifeSkills == null,
+                    lifeSkillIsLocked = it.lifeSkillIsLocked,
                     contributionPointIsLocked = it.contributionPoints == null
                 )
             ).toDTO()
@@ -115,7 +118,7 @@ class BDOFamilyService(
     /**
      * 가문 확인 시도.
      *
-     * 10분 이내에 시작된 가문 인증 프로세스 스타트 포인트와 비교. **생활 스킬 레벨** 숨김 여부와 **최대 공헌도** 숨김 여부로 판단.
+     * 10분 이내에 시작된 가문 인증 프로세스 스타트 포인트와 비교. **생활 스킬 레벨** 숨김 여부로 판단.
      * 사칭 및 중복 방지를 위해 인증 성공 시 다른 계정들의 가문 중 [code]와 [region]이 일치하는 가문 모두 인증 취소.
      *
      * @param [uuid] 유저 UUID
@@ -128,6 +131,7 @@ class BDOFamilyService(
      * @throws [InvalidArgumentException] 10분 이내에 시작된 가문 인증 프로세스 스타트 포인트가 존재하지 않을 경우.
      * @throws [kr.karanda.karandaserver.exception.ExternalApiException] 가문 정보 가져오기에 실패할 경우 throw.
      */
+    @Transactional
     fun verifyFamily(uuid: String, code: String, region: BDORegion): BDOFamilyDTO {
         val url = "${adventurerProfileUrlBase.getUrl(region)}?profileTarget=${code}"
         val now = ZonedDateTime.now(ZoneId.of("UTC"))
@@ -137,36 +141,54 @@ class BDOFamilyService(
             verified = false,
             userUUID = uuid
         ) ?: throw UnknownUserException()
-        val firstVerification = familyVerificationRepository.findByFamilyAndStartPointAndCreatedAtAfter(
+        val startPoint = familyVerificationRepository.findByFamilyAndStartPointAndCreatedAtAfterOrderByCreatedAtDesc(
             family = family,
             startPoint = true,
             createdAtAfter = now.minusMinutes(10)
         ) ?: throw InvalidArgumentException()
         val profile = utils.getAdventurerProfile(url)
-        val verification = familyVerificationRepository.save(
+        val verifications = familyVerificationRepository.findAllByFamilyAndStartPointAndCreatedAtAfterOrderByCreatedAtDesc(
+            family = family,
+            startPoint = false,
+            createdAtAfter = startPoint.createdAt
+        ).map { it.toDTO() }
+        familyVerificationRepository.save(
             BDOFamilyVerification(
                 family = family,
                 createdAt = now,
                 startPoint = false,
-                lifeSkillIsLocked = profile.lifeSkills == null,
+                lifeSkillIsLocked = profile.lifeSkillIsLocked,
                 contributionPointIsLocked = profile.contributionPoints == null
             )
-        ).toDTO()
-        if (firstVerification.lifeSkillIsLocked != verification.lifeSkillIsLocked && firstVerification.contributionPointIsLocked != verification.contributionPointIsLocked) {
-            familyRepository.findAllByCodeAndRegionAndOwner_UserUUIDNot(
-                code = code,
-                region = region.name,
-                ownerUserUUID = uuid
-            ).forEach { it.verified = false }
-            family.apply {
-                familyName = profile.familyName
-                mainClass = profile.mainClass
-                verified = true
+        )
+        if(verifications.any { it.lifeSkillIsLocked != startPoint.lifeSkillIsLocked}) {
+            //Step 2
+            if(startPoint.lifeSkillIsLocked == profile.lifeSkillIsLocked){
+                familyRepository.findAllByCodeAndRegionAndOwner_UserUUIDNot(
+                    code = code,
+                    region = region.name,
+                    ownerUserUUID = uuid
+                ).forEach { it.verified = false }
+                family.apply {
+                    familyName = profile.familyName
+                    mainClass = profile.mainClass
+                    verified = true
+                }
+            } else {
+                throw InvalidArgumentException()
             }
-            return family.toDTO()
         } else {
-            throw InvalidArgumentException()
+            //Step 1
+            if(startPoint.lifeSkillIsLocked != profile.lifeSkillIsLocked){
+                family.apply {
+                    familyName = profile.familyName
+                    mainClass = profile.mainClass
+                }
+            } else {
+                throw InvalidArgumentException()
+            }
         }
+        return family.toDTO()
     }
 
     /**
@@ -183,9 +205,9 @@ class BDOFamilyService(
      */
     fun unregisterFamily(uuid: String, code: String, region: BDORegion) {
         val user = userRepository.findByUserUUID(uuid = uuid) ?: throw UnknownUserException()
-        if (user.mainFamily != null && user.mainFamily!!.code == code && user.mainFamily!!.region == region.name) {
-            val family = user.mainFamily
-            user.mainFamily = null
+        if (user.bdoFamily != null && user.bdoFamily!!.code == code && user.bdoFamily!!.region == region.name) {
+            val family = user.bdoFamily
+            user.bdoFamily = null
             familyRepository.delete(family!!)
         } else {
             familyRepository.findByCodeAndRegionAndOwner_UserUUID(code = code, region = region.name, userUUID = uuid)
@@ -196,7 +218,7 @@ class BDOFamilyService(
     }
 
     /**
-     * 대표 가문 설정.
+     * 대표 가문 설정. (deprecated)
      *
      * @param [uuid] 유저 UUID
      * @param [code] 가문 프로필 code
@@ -213,7 +235,7 @@ class BDOFamilyService(
             region = region.name,
             userUUID = uuid
         ) ?: throw InvalidArgumentException()
-        user.mainFamily = family
+        user.bdoFamily = family
         return user.toUserDTO()
     }
 
@@ -229,6 +251,7 @@ class BDOFamilyService(
      * @throws [InvalidArgumentException] 제공된 [code], [region], [uuid]가 모두 일치하는 가문이 없을 경우 throw.
      * @throws [kr.karanda.karandaserver.exception.ExternalApiException] 가문 정보 가져오기에 실패할 경우 throw.
      */
+    @Transactional
     fun updateFamilyData(uuid: String, code: String, region: BDORegion): BDOFamilyDTO {
         val url = "${adventurerProfileUrlBase.getUrl(region)}?profileTarget=${code}"
         val family = familyRepository.findByCodeAndRegionAndVerifiedAndOwner_UserUUID(
@@ -240,12 +263,14 @@ class BDOFamilyService(
         utils.getAdventurerProfile(url).run {
             family.familyName = familyName
             family.mainClass = mainClass
+            family.maxGearScore = maxGearScore
+            family.lastUpdated = ZonedDateTime.now(ZoneId.of("UTC"))
         }
         return family.toDTO()
     }
 
     /**
-     * 가문 목록 조회.
+     * 가문 목록 조회. (deprecated)
      *
      * 계정에 등록된 가문이 없거나 일치하는 계정이 없을 경우 `emptyList` 반환.
      *

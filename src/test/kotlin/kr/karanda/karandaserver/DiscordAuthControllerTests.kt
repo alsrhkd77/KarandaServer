@@ -1,9 +1,9 @@
 package kr.karanda.karandaserver
 
 import io.jsonwebtoken.Jwts
-import kr.karanda.karandaserver.dto.TokenProperties
+import kr.karanda.karandaserver.dto.properties.TokenProperties
 import kr.karanda.karandaserver.entity.User
-import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.repository.DefaultDataProvider
 import kr.karanda.karandaserver.repository.jpa.UserRepository
 import kr.karanda.karandaserver.util.TokenUtils
 import org.junit.jupiter.api.BeforeEach
@@ -33,7 +33,7 @@ class DiscordAuthControllerTests {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var defaultDataRepository: DefaultDataRepository
+    private lateinit var defaultDataProvider: DefaultDataProvider
 
     @Autowired
     private lateinit var wac: WebApplicationContext
@@ -46,7 +46,7 @@ class DiscordAuthControllerTests {
     fun setUp() {
         user = userRepository.findAll().first()
         println("discordId: ${user.discordId}")
-        tokenProperties = defaultDataRepository.getTokenProperties()
+        tokenProperties = defaultDataProvider.getTokenProperties()
         client = MockMvcWebTestClient.bindToApplicationContext(wac)
             //.baseUrl("http://localhost:8000")
             //.defaultHeader("Qualification", tokenFactory.createQualificationToken())

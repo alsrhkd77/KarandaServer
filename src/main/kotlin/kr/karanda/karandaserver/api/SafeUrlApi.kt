@@ -1,8 +1,8 @@
 package kr.karanda.karandaserver.api
 
 import jakarta.annotation.PostConstruct
-import kr.karanda.karandaserver.dto.SafeBrowsingApiProperties
-import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.dto.properties.SafeBrowsingApiProperties
+import kr.karanda.karandaserver.repository.DefaultDataProvider
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -14,11 +14,11 @@ import org.springframework.web.client.RestClient
  * V5 문서가 완성되면 마이그레이션 해야할 수 있음.
  */
 @Component
-class SafeUrlApi(private val defaultDataRepository: DefaultDataRepository) {
+class SafeUrlApi(private val defaultDataProvider: DefaultDataProvider) {
     private lateinit var client: RestClient
 
     val properties: SafeBrowsingApiProperties
-        get() = defaultDataRepository.getSafeBrowsingApiProperties()
+        get() = defaultDataProvider.getSafeBrowsingApiProperties()
 
     @PostConstruct
     fun initialize() {

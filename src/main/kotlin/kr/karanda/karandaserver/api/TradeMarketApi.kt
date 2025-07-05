@@ -2,10 +2,10 @@ package kr.karanda.karandaserver.api
 
 import kr.karanda.karandaserver.dto.MarketItem
 import kr.karanda.karandaserver.dto.MarketWaitItem
-import kr.karanda.karandaserver.dto.TradeMarketProperties
+import kr.karanda.karandaserver.dto.properties.TradeMarketProperties
 import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.exception.ExternalApiException
-import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.repository.DefaultDataProvider
 import kr.karanda.karandaserver.util.WebUtils
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Component
@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
 import kotlin.math.min
 
 @Component
-class TradeMarketApi(private val defaultDataRepository: DefaultDataRepository) {
+class TradeMarketApi(private val defaultDataProvider: DefaultDataProvider) {
     val client: RestClient
         get() {
             return RestClient.builder()
@@ -30,7 +30,7 @@ class TradeMarketApi(private val defaultDataRepository: DefaultDataRepository) {
         }
 
     val properties: TradeMarketProperties
-        get() = defaultDataRepository.getTradeMarketProperties()
+        get() = defaultDataProvider.getTradeMarketProperties()
 
     @Cacheable("TradeMarketWaitList")
     fun getWaitList(region: BDORegion): List<MarketWaitItem> {

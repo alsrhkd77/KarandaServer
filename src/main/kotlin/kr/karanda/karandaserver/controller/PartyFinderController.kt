@@ -6,29 +6,29 @@ import kr.karanda.karandaserver.dto.SimplifiedRecruitmentPost
 import kr.karanda.karandaserver.dto.Applicant
 import kr.karanda.karandaserver.dto.RecruitmentPost
 import kr.karanda.karandaserver.dto.TokenClaims
-import kr.karanda.karandaserver.service.AdventurerHubService
+import kr.karanda.karandaserver.service.PartyFinderService
 import org.apache.coyote.BadRequestException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
-@Tag(name = "Adventurer hub", description = "Adventurer hub API")
+@Tag(name = "Party finder", description = "Party finder API")
 @RestController
-@RequestMapping("/adventurer-hub")
-class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
+@RequestMapping("/party-finder")
+class PartyFinderController(val partyFinderService: PartyFinderService) {
 
     @PostMapping("post/create")
     @Operation(summary = "Create new recruitment post")
-    fun createNewPost(@RequestBody data: RecruitmentPost): ResponseEntity<Long> {
+    fun createNewPost(@RequestBody data: RecruitmentPost): ResponseEntity<RecruitmentPost> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        if (data.title.isEmpty() || data.title.length > 40) {
+        if (data.title.isEmpty() || data.title.length > 60) {
             throw BadRequestException("bad title")
         } else if (data.category == "guildWarHeroes") {
-            if (data.guildName.isNullOrEmpty()) {
+            if (data.guildName.isEmpty()) {
                 throw BadRequestException("bad guild")
             }
-            data.guildName = data.guildName!!.replace(Regex(" "), "")
+            data.guildName = data.guildName.replace(Regex(" "), "")
         }
         if (data.discordLink != null && data.discordLink!!.isNotEmpty()) {
             if (!data.discordLink!!.startsWith("https://discord.gg/")) {
@@ -40,42 +40,42 @@ class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
             }
         }
         //TODO: 링크 공백 제거, 디스코드 링크 검증
-        val postId: Long = adventurerHubService.createNewPost(uuid = authentication.userUUID, data = data).id!!
-        return ResponseEntity(postId, HttpStatus.CREATED)
+        val post: RecruitmentPost = partyFinderService.createNewPost(uuid = authentication.userUUID, data = data)
+        return ResponseEntity(post, HttpStatus.CREATED)
     }
 
     @PatchMapping("post/update")
     @Operation(summary = "Update recruitment post")
     fun updatePost(@RequestBody data: RecruitmentPost): ResponseEntity<RecruitmentPost> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.updatePost(uuid = authentication.userUUID, data = data)
+        val result = partyFinderService.updatePost(uuid = authentication.userUUID, data = data)
         return ResponseEntity.ok(result)
     }
 
     @GetMapping("/posts")
     @Operation(summary = "Get 100 recent recruitment posts. Response is a list of simplified posts")
     fun getPosts(@RequestParam(name = "region", required = true) region: String): List<SimplifiedRecruitmentPost> {
-        return adventurerHubService.getPosts(region).map { it.simplify() }
+        return partyFinderService.getPosts(region).map { it.simplify() }
     }
 
     @GetMapping("/post")
     @Operation(summary = "Get recruitment post's information.")
     fun getPost(@RequestParam(required = true) postId: Long): RecruitmentPost {
-        return adventurerHubService.getPost(postId = postId)
+        return partyFinderService.getPost(postId = postId)
     }
 
     @GetMapping("/post/detail")
     @Operation(summary = "Get recruitment post's detail")
     fun getDetail(@RequestParam(required = true) postId: Long): RecruitmentPost {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        return adventurerHubService.getPost(postId = postId, uuid = authentication.userUUID)
+        return partyFinderService.getPost(postId = postId, uuid = authentication.userUUID)
     }
 
     @PostMapping("/post/open")
     @Operation(summary = "Start recruiting for this post")
     fun openPost(@RequestParam(required = true) postId: Long): ResponseEntity<RecruitmentPost> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.openPost(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.openPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
@@ -83,15 +83,15 @@ class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
     @Operation(summary = "Recruiting for this post is closed")
     fun closePost(@RequestParam(required = true) postId: Long): ResponseEntity<RecruitmentPost> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.closePost(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.closePost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/post/apply")
+    @PostMapping("/post/join")
     @Operation(summary = "Apply to this post")
-    fun applyToPost(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
+    fun joinToPost(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.applyToPost(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.joinToPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
@@ -99,15 +99,18 @@ class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
     @Operation(summary = "Cancel to this post")
     fun cancelToPost(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.cancelToPost(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.cancelToPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
-    @PostMapping("/post/approve")
+    @PostMapping("/post/accept")
     @Operation(summary = "Approve the applicant")
-    fun approveApplicant(@RequestParam(required = true) postId: Long, @RequestParam(required = true) applicantId: String): ResponseEntity<Applicant> {
+    fun acceptApplicant(
+        @RequestParam(required = true) postId: Long,
+        @RequestParam(required = true) applicantId: String
+    ): ResponseEntity<Applicant> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.approveApplicant(
+        val result = partyFinderService.acceptApplicant(
             postId = postId,
             applicantId = applicantId,
             uuid = authentication.userUUID
@@ -120,13 +123,11 @@ class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
     fun rejectApplicant(
         @RequestParam(required = true) postId: Long,
         @RequestParam(required = true) applicantId: String,
-        @RequestParam(required = true) reason: String
     ): ResponseEntity<Applicant> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.rejectApplicant(
+        val result = partyFinderService.rejectApplicant(
             postId = postId,
             applicantId = applicantId,
-            reason = reason,
             uuid = authentication.userUUID
         )
         return ResponseEntity.ok(result)
@@ -134,25 +135,25 @@ class AdventurerHubController(val adventurerHubService: AdventurerHubService) {
 
     @GetMapping("/post/applicant")
     @Operation(summary = "Get single applicant")
-    fun getPostApplicant(@RequestParam postId: Long): ResponseEntity<Applicant?> {
+    fun getPostApplicant(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant?> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.getPostApplicant(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.getPostApplicant(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
     @GetMapping("/post/applicants")
     @Operation(summary = "Get applicants list")
-    fun getPostApplicants(@RequestParam postId: Long): ResponseEntity<List<Applicant>> {
+    fun getPostApplicants(@RequestParam(required = true) postId: Long): ResponseEntity<List<Applicant>> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.getPostApplicants(postId = postId, uuid = authentication.userUUID)
+        val result = partyFinderService.getPostApplicants(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 
-    @GetMapping("/user/applied")
-    @Operation(summary = "Get list of user applied")
-    fun getUserApplied(): ResponseEntity<List<Applicant>>{
+    @GetMapping("/user/joined")
+    @Operation(summary = "Get list of user joined")
+    fun fetchUserJoined(): ResponseEntity<List<Applicant>> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
-        val result = adventurerHubService.getUserApplied(uuid = authentication.userUUID)
+        val result = partyFinderService.fetchUserJoined(uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
 }

@@ -1,11 +1,11 @@
 package kr.karanda.karandaserver.util
 
 import kr.karanda.karandaserver.dto.BDOAdventurerProfile
-import kr.karanda.karandaserver.dto.BDOLifeSkillLevels
+import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.exception.ExternalApiException
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import org.jsoup.select.Elements
+import org.jsoup.nodes.Element
 
 class WebUtils {
 
@@ -38,36 +38,61 @@ class WebUtils {
         "15" to "maegu",
         "6" to "scholar",
         "33" to "dosa",
-        "34" to "deadeye"
+        "34" to "deadeye",
+        "3" to "wukong"
     )
 
     fun getAdventurerProfile(url: String): BDOAdventurerProfile {
         try {
             val doc: Document = Jsoup.connect(url).get()
-            val lineList: Elements = doc.selectFirst("ul.line_list")!!.select("span.desc")     // 0:길드, 1:생성일, 2:공헌도
-
-            val guild = lineList[0].text()
-            val createdOn = lineList[1].text()
-            val contributionPoints = lineList[2].text().toIntOrNull()
-            val familyName = doc.selectFirst("div.profile_info.no_profile")!!.selectFirst("p.nick")!!.text()
+            val profileDetail = doc.selectFirst("div.profile_detail") ?: throw ExternalApiException()
+            val familyName = profileDetail.selectFirst("p.nick")!!.text()
+            val region = profileDetail.selectFirst("span.region_info")?.text()
             val classType = doc.selectFirst("span.profile_img.icon_character")!!.classNames()
                 .first { !it.equals("profile_img") && !it.equals("icon_character") }.replace("icn_character", "")
+
+            val lineList: List<Element> = doc.selectFirst("ul.line_list")!!.children().map {
+                it.selectFirst("span.desc") ?: throw ExternalApiException()
+            }     // 0:생성일, 1:길드, 2:최대 공방합, 3:기운, 4:공헌도
+            val createdOn = lineList[0].text()
+            val guild = lineList[1].let {
+                if (it.selectFirst("em.lock") != null) {
+                    null
+                } else if (it.selectFirst("span.desc")?.selectFirst("span.desc") != null) {
+                    ""
+                } else {
+                    it.selectFirst("span.desc")?.text() ?: ""
+                }
+            }
+            val maxGearScore = lineList[2].text().toIntOrNull()
+            val energy = lineList[3].text().toIntOrNull()
+            val contributionPoints = lineList[4].text().toIntOrNull()
+
             val characterLevels = doc.selectFirst("ul.character_list")!!.select("p.character_info")
                 .map { it.child(1).select("em").text().toIntOrNull() ?: 0 }
-            val lifeSkillLevel = doc.selectFirst("div.character_spec")?.select("li")
-                ?.map { it.selectFirst("span.spec_level")?.text() ?: "?" }
-                ?.let { BDOLifeSkillLevels(it) }
+
+            val lifeSkillIsLocked = doc.selectFirst("div.character_data_box.lock") != null
 
             return BDOAdventurerProfile(
                 familyName = familyName,
+                region = region?.let {
+                    try {
+                        BDORegion.valueOf(it)
+                    } catch (e: Exception) {
+                        null
+                    }
+                },
                 mainClass = classNameMapping[classType] ?: "unknown",
                 createdOn = createdOn,
                 guild = guild,
+                maxGearScore = maxGearScore,
+                energy = energy,
                 contributionPoints = contributionPoints,
-                charactersLevel = characterLevels,
-                lifeSkills = lifeSkillLevel
+                characterLevels = characterLevels,
+                lifeSkillIsLocked = lifeSkillIsLocked,
             )
         } catch (e: Exception) {
+            println(e)
             throw ExternalApiException()
         }
     }

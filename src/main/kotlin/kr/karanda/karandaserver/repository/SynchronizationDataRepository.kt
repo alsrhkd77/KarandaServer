@@ -3,30 +3,14 @@ package kr.karanda.karandaserver.repository
 import com.google.cloud.firestore.CollectionReference
 import com.google.cloud.firestore.DocumentSnapshot
 import com.google.cloud.firestore.Firestore
-import jakarta.annotation.PostConstruct
-import kr.karanda.karandaserver.dto.BroadcastMessage
 import org.springframework.core.env.Environment
-import org.springframework.messaging.simp.SimpMessagingTemplate
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Repository
 
 @Repository
 class SynchronizationDataRepository(
     private val firestore: Firestore,
     private val environment: Environment,
-    private val messagingTemplate: SimpMessagingTemplate
 ) {
-
-    @PostConstruct
-    fun initialize() {
-        listenBroadcastMessage()
-    }
-
-    @Async
-    fun broadcast(broadcastMessage: BroadcastMessage) {
-        collection().document("broadcast").set(broadcastMessage)
-    }
-
     fun getTradeMarketLastUpdated(): Int {
         val document = collection().document("trade-market").get().get()
         if (document.exists()) {
@@ -53,28 +37,6 @@ class SynchronizationDataRepository(
 
     fun setTradeMarketPriceLastUpdated(itemNum: Int) {
         collection().document("trade-market").update("priceLastUpdated", itemNum.toString())
-    }
-
-    private fun listenBroadcastMessage() {
-        collection().document("broadcast").addSnapshotListener { snapshot, e ->
-            if (e != null) {
-                println("Listen failed.\n${e.message}")
-                return@addSnapshotListener
-            }
-            if (snapshot != null && snapshot.exists()) {
-                snapshot.toObject(BroadcastMessage::class.java)?.let {
-                    broadcastToWebsocket(it)
-                }
-            } else {
-                println("Current data: null")
-            }
-        }
-    }
-
-    private fun broadcastToWebsocket(data: BroadcastMessage) {
-        for (destination in data.destinations) {
-            messagingTemplate.convertAndSend(destination, data.message)
-        }
     }
 
     private fun getDocument(name: String): DocumentSnapshot {

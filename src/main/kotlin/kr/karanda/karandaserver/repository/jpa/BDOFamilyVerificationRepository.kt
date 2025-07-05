@@ -6,9 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.ZonedDateTime
 
 interface BDOFamilyVerificationRepository : JpaRepository<BDOFamilyVerification, Long> {
-    fun findByFamilyAndStartPointAndCreatedAtAfter(
+    fun findByFamilyAndStartPointAndCreatedAtAfterOrderByCreatedAtDesc(
         family: BDOFamily,
         startPoint: Boolean,
         createdAtAfter: ZonedDateTime
     ): BDOFamilyVerification?
+
+    fun findAllByFamilyAndStartPointAndCreatedAtAfterOrderByCreatedAtDesc(
+        family: BDOFamily,
+        startPoint: Boolean,
+        createdAtAfter: ZonedDateTime
+    ): List<BDOFamilyVerification>
 }

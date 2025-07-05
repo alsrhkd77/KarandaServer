@@ -1,4 +1,4 @@
-package kr.karanda.karandaserver.quartz
+package kr.karanda.karandaserver.infrastructure.quartz
 
 import kr.karanda.karandaserver.service.TradeMarketService
 import org.quartz.JobExecutionContext
@@ -7,13 +7,12 @@ import org.springframework.scheduling.quartz.QuartzJobBean
 import org.springframework.stereotype.Component
 
 @Component
-class MarketLatestPriceDataUpdateJob : QuartzJobBean() {
+class PublishMarketWaitListJob: QuartzJobBean() {
 
     @Autowired
     private var tradeMarketService: TradeMarketService? = null
 
-
     override fun executeInternal(context: JobExecutionContext) {
-        tradeMarketService?.updateLatestPriceData()
+        tradeMarketService?.publishWaitList()
     }
 }

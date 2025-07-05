@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -18,29 +19,29 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/bdo-family")
 class BDOFamilyController(private val familyService: BDOFamilyService) {
     @PostMapping("/register")
-    @Operation(summary = "Create new family with profile code & region")
-    fun registerNewFamily(param: BDOFamilyRequest): BDOFamilyDTO {
+    @Operation(summary = "Create new family with profile code & region & family name")
+    fun registerNewFamily(@RequestBody param: BDOFamilyRequest): BDOFamilyDTO {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return familyService.registerNewFamily(authentication.userUUID, param.code, param.region)
     }
 
     @PostMapping("/start-verification")
     @Operation(summary = "Start family verification")
-    fun startVerification(param: BDOFamilyRequest): BDOFamilyVerificationDTO {
+    fun startVerification(@RequestBody param: BDOFamilyRequest): BDOFamilyVerificationDTO {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return familyService.startVerification(authentication.userUUID, param.code, param.region)
     }
 
     @PostMapping("/verify")
     @Operation(summary = "Try verification")
-    fun verifyFamily(param: BDOFamilyRequest): BDOFamilyDTO {
+    fun verifyFamily(@RequestBody param: BDOFamilyRequest): BDOFamilyDTO {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return familyService.verifyFamily(authentication.userUUID, param.code, param.region)
     }
 
     @DeleteMapping("/unregister")
     @Operation(summary = "Delete family")
-    fun unregisterFamily(param: BDOFamilyRequest): ResponseEntity<Any> {
+    fun unregisterFamily(@RequestBody param: BDOFamilyRequest): ResponseEntity<Any> {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         familyService.unregisterFamily(authentication.userUUID, param.code, param.region)
         return ResponseEntity(HttpStatus.OK)
@@ -55,7 +56,7 @@ class BDOFamilyController(private val familyService: BDOFamilyService) {
 
     @PostMapping("/update-family")
     @Operation(summary = "Update family data")
-    fun updateFamilyData(param: BDOFamilyRequest): BDOFamilyDTO {
+    fun updateFamilyData(@RequestBody param: BDOFamilyRequest): BDOFamilyDTO {
         val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
         return familyService.updateFamilyData(authentication.userUUID, param.code, param.region)
     }

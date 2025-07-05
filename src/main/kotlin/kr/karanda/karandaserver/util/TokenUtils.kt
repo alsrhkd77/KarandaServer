@@ -3,10 +3,10 @@ package kr.karanda.karandaserver.util
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
-import kr.karanda.karandaserver.dto.TokenProperties
+import kr.karanda.karandaserver.dto.properties.TokenProperties
 import kr.karanda.karandaserver.dto.Tokens
 import kr.karanda.karandaserver.dto.TokenClaims
-import kr.karanda.karandaserver.repository.DefaultDataRepository
+import kr.karanda.karandaserver.repository.DefaultDataProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -21,12 +21,12 @@ import javax.crypto.spec.SecretKeySpec
  * JWT 생성 및 검증을 위한 클래스
  */
 @Component
-class TokenUtils(private val defaultDataRepository: DefaultDataRepository) {
+class TokenUtils(private val defaultDataProvider: DefaultDataProvider) {
 
     val logger: Logger = LoggerFactory.getLogger(TokenUtils::class.java)
 
     val tokenProperties: TokenProperties
-        get() = defaultDataRepository.getTokenProperties()
+        get() = defaultDataProvider.getTokenProperties()
 
     /**
      * 유저 정보를 이용해 **AccessToken**과 **RefreshToken**을 모두 생성.

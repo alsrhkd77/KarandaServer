@@ -7,7 +7,7 @@ class RandomCodeUtils{
     private val upperCase = ('A'..'Z')
 
     fun generate(length: Int): String {
-        val charset = numbers + lowerCase
+        val charset = numbers + upperCase
         return List(length) { charset.random() }.joinToString("")
     }
 }

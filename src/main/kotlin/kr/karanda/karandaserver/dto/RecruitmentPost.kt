@@ -1,44 +1,41 @@
 package kr.karanda.karandaserver.dto
 
-import jakarta.persistence.Column
 import java.time.ZonedDateTime
 
 data class RecruitmentPost(
     var id: Long?,
-    var title: String,
     var region: String,
-    var createdAt: ZonedDateTime?,
+    var title: String,
     var category: String,
-    var subcategory: String?,
     var status: Boolean,
-    var recruitMethod: String,
-    var currentParticipants: Int = 0,
-    var maximumParticipants: Int,
-    var guildName: String?,
-    @Column(length = 1024)
-    var content: String?,
+    var recruitmentType: String,
+    var maxMembers: Int,
+    var guildName: String,
+    var specLimit: Int? = null,
+    var content: String,
+    var privateContent: String,
     var discordLink: String?,
-    var showContentAfterJoin: Boolean?,
+    var createdAt: ZonedDateTime?,
+    var updatedAt: ZonedDateTime?,
     var blinded: Boolean = false,
     var author: UserDTO?,
-    var applicant: Applicant? = null,
+    var currentParticipants: Int = 0,
 ) {
     fun simplify(): SimplifiedRecruitmentPost {
         return SimplifiedRecruitmentPost(
             id = this.id,
             title = this.title,
             region = this.region,
-            createdAt = this.createdAt,
             category = this.category,
-            subcategory = this.subcategory,
             status = this.status,
-            recruitMethod = this.recruitMethod,
-            currentParticipants = this.currentParticipants,
-            maximumParticipants = this.maximumParticipants,
+            recruitmentType = this.recruitmentType,
+            maxMembers = this.maxMembers,
             guildName = this.guildName,
-            showContentAfterJoin = this.showContentAfterJoin,
+            createdAt = this.createdAt,
+            updatedAt = this.updatedAt,
             blinded = this.blinded,
             author = this.author!!,
+            currentParticipants = this.currentParticipants,
         )
     }
 }

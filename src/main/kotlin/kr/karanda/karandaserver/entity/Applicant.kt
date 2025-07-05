@@ -15,11 +15,10 @@ class Applicant(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     var code: String? = null,
-    var appliedAt: ZonedDateTime,
-    var canceledAt: ZonedDateTime? = null,
+    var joinAt: ZonedDateTime,
+    var cancelledAt: ZonedDateTime? = null,
     var rejectedAt: ZonedDateTime? = null,
-    var approvedAt: ZonedDateTime? = null,
-    var reason: String? = null,
+    var acceptedAt: ZonedDateTime? = null,
     @ManyToOne
     var post: RecruitmentPost,
     @ManyToOne
@@ -28,11 +27,10 @@ class Applicant(
     fun toDTO(): Applicant {
         return ApplicantDTO(
             code = code,
-            appliedAt = appliedAt,
-            canceledAt = canceledAt,
+            joinAt = joinAt,
+            cancelledAt = cancelledAt,
             rejectedAt = rejectedAt,
-            approvedAt = approvedAt,
-            reason = reason,
+            acceptedAt = acceptedAt,
             user = owner.toUserDTO(),
             postId = post.id!!,
         )

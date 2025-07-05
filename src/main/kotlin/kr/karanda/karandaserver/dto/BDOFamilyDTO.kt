@@ -2,6 +2,8 @@ package kr.karanda.karandaserver.dto
 
 import kotlinx.serialization.Serializable
 import kr.karanda.karandaserver.enums.BDORegion
+import kr.karanda.karandaserver.util.ZonedDateTimeSerializer
+import java.time.ZonedDateTime
 
 @Serializable
 data class BDOFamilyDTO(
@@ -9,5 +11,8 @@ data class BDOFamilyDTO(
     var region: BDORegion,
     var familyName: String,
     var mainClass: String,
+    var maxGearScore: Int?,
     var verified: Boolean,
+    @Serializable(with = ZonedDateTimeSerializer::class)
+    var lastUpdated: ZonedDateTime?,
 )

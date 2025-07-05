@@ -2,18 +2,16 @@ package kr.karanda.karandaserver.repository
 
 import com.google.cloud.firestore.DocumentSnapshot
 import com.google.cloud.firestore.Firestore
-import kr.karanda.karandaserver.dto.DiscordProperties
-import kr.karanda.karandaserver.dto.SafeBrowsingApiProperties
-import kr.karanda.karandaserver.dto.TokenProperties
-import kr.karanda.karandaserver.dto.TradeMarketProperties
-import org.springframework.stereotype.Repository
+import kr.karanda.karandaserver.dto.properties.*
+import org.springframework.stereotype.Component
 
-@Repository
-class DefaultDataRepository(private val firestore: Firestore) {
+@Component
+class DefaultDataProvider(private val firestore: Firestore) {
     private var discordProperties: DiscordProperties? = null
     private var tokenProperties: TokenProperties? = null
     private var tradeMarketProperties: TradeMarketProperties? = null
     private var safeBrowsingApiProperties: SafeBrowsingApiProperties? = null
+    private var redisProperties: RedisProperties? = null
 
     fun getDiscordProperties(): DiscordProperties {
         if (this.discordProperties == null) {
@@ -42,6 +40,13 @@ class DefaultDataRepository(private val firestore: Firestore) {
                 getDefaultData("safe-browsing-api").toObject(SafeBrowsingApiProperties::class.java)
         }
         return safeBrowsingApiProperties!!
+    }
+
+    fun getRedisProperties(): RedisProperties {
+        if(redisProperties == null) {
+            redisProperties = getDefaultData("redis").toObject(RedisProperties::class.java)
+        }
+        return redisProperties!!
     }
 
     private fun getDefaultData(name: String): DocumentSnapshot {
