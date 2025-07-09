@@ -112,6 +112,7 @@ class PartyFinderService(
     }
 
     fun openPost(postId: Long, uuid: String): RecruitmentPostDTO {
+        val broadcastMessages: MutableList<BroadcastMessage> = mutableListOf()
         val posts = userRepository.findByUserUUID(uuid)?.recruitmentPost ?: throw UnknownUserException()
         val post = posts.singleOrNull { it.id == postId } ?: throw InvalidArgumentException()
         if(post.status){
@@ -119,13 +120,14 @@ class PartyFinderService(
         }
         posts.singleOrNull { it.status }?.let {
             it.closedAt = ZonedDateTime.now(ZoneId.of("UTC"))
-            recruitmentPostRepository.saveAndFlush(it)
+            recruitmentPostRepository.save(it)
+            broadcastMessages.add(BroadcastMessage.updateRecruitmentPost(it.toDTO()))
         }
         val needNotify = post.openedAt == null
         post.openedAt = ZonedDateTime.now(ZoneId.of("UTC"))
         recruitmentPostRepository.saveAndFlush(post)
 
-        val broadcastMessages = mutableListOf(BroadcastMessage.updateRecruitmentPost(post.toDTO()))
+        broadcastMessages.add(BroadcastMessage.updateRecruitmentPost(post.toDTO()))
         if (needNotify) {
             broadcastMessages.add(BroadcastMessage.notifyRecruitmentPost(post.toDTO()))
             if (post.category == "guildBossRaid") {
