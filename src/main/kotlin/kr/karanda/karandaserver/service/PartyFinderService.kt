@@ -114,54 +114,53 @@ class PartyFinderService(
     fun openPost(postId: Long, uuid: String): RecruitmentPostDTO {
         val posts = userRepository.findByUserUUID(uuid)?.recruitmentPost ?: throw UnknownUserException()
         val post = posts.singleOrNull { it.id == postId } ?: throw InvalidArgumentException()
-        if (posts.any { it.status } || post.status) {
-            // Cannot open multiple posts OR Post already opened
-            return post.toDTO()
-        } else {
-            val needNotify = post.openedAt == null
-            post.openedAt = ZonedDateTime.now(ZoneId.of("UTC"))
-            recruitmentPostRepository.saveAndFlush(post)
-
-            val broadcastMessages = mutableListOf(BroadcastMessage.updateRecruitmentPost(post.toDTO()))
-            if (needNotify) {
-                broadcastMessages.add(BroadcastMessage.notifyRecruitmentPost(post.toDTO()))
-                if (post.category == "guildBossRaid") {
-                    val fcm =
-                        userFcmSettingsRepository.findAllByRegionAndPartyFinderIsTrue(post.region).map { it.toDTO() }
-                    val fcmMessage = MulticastMessage.builder()
-                        .addAllTokens(fcm.map { it.token })
-                        .setAndroidConfig(
-                            AndroidConfig.builder()
-                                .setPriority(AndroidConfig.Priority.HIGH)
-                                .setNotification(
-                                    AndroidNotification.builder()
-                                        //.setTitle("Party Finder")
-                                        .setTitleLocalizationKey("partyFinder")
-                                        //.setBody("${post.title} - Now recruiting!")
-                                        .setBodyLocalizationKey("guildBossRaidRecruitOpened")
-                                        .addBodyLocalizationArg(post.title)
-                                        .build()
-                                ).build()
-                        ).setWebpushConfig(
-                            WebpushConfig.builder()
-                                .setFcmOptions(WebpushFcmOptions.builder().setLink("https://www.karanda.kr").build())
-                                .setNotification(
-                                    WebpushNotification.builder()
-                                        .setTitle("Party Finder")
-                                        .setBody("${post.title} - Now recruiting!")
-                                        .setIcon("https://www.karanda.kr/icons/android-chrome-512x512.png")
-                                        .setBadge("https://www.karanda.kr/icons/android-chrome-192x192.png")
-                                        .build()
-                                ).build()
-                        ).build()
-                    FirebaseMessaging.getInstance().sendEachForMulticast(fcmMessage)
-                }
-            }
-            redisPublisher.broadcast(broadcastMessages)
-            //publishLatestPost(post.toDTO())
-
+        if(post.status){
             return post.toDTO()
         }
+        posts.singleOrNull { it.status }?.let {
+            it.closedAt = ZonedDateTime.now(ZoneId.of("UTC"))
+            recruitmentPostRepository.saveAndFlush(it)
+        }
+        val needNotify = post.openedAt == null
+        post.openedAt = ZonedDateTime.now(ZoneId.of("UTC"))
+        recruitmentPostRepository.saveAndFlush(post)
+
+        val broadcastMessages = mutableListOf(BroadcastMessage.updateRecruitmentPost(post.toDTO()))
+        if (needNotify) {
+            broadcastMessages.add(BroadcastMessage.notifyRecruitmentPost(post.toDTO()))
+            if (post.category == "guildBossRaid") {
+                val fcm =
+                    userFcmSettingsRepository.findAllByRegionAndPartyFinderIsTrue(post.region).map { it.toDTO() }
+                val fcmMessage = MulticastMessage.builder()
+                    .addAllTokens(fcm.map { it.token })
+                    .setAndroidConfig(
+                        AndroidConfig.builder()
+                            .setPriority(AndroidConfig.Priority.HIGH)
+                            .setNotification(
+                                AndroidNotification.builder()
+                                    .setTitleLocalizationKey("partyFinder")
+                                    .setBodyLocalizationKey("${post.category}RecruitOpened")
+                                    .addBodyLocalizationArg(post.title)
+                                    .build()
+                            ).build()
+                    ).setWebpushConfig(
+                        WebpushConfig.builder()
+                            .setFcmOptions(WebpushFcmOptions.builder().setLink("https://www.karanda.kr").build())
+                            .setNotification(
+                                WebpushNotification.builder()
+                                    .setTitle("Party Finder")
+                                    .setBody("${post.title} - Now recruiting!")
+                                    .setIcon("https://www.karanda.kr/icons/android-chrome-512x512.png")
+                                    .setBadge("https://www.karanda.kr/icons/android-chrome-192x192.png")
+                                    .build()
+                            ).build()
+                    ).build()
+                FirebaseMessaging.getInstance().sendEachForMulticast(fcmMessage)
+            }
+        }
+        redisPublisher.broadcast(broadcastMessages)
+
+        return post.toDTO()
     }
 
     fun closePost(postId: Long, uuid: String): RecruitmentPostDTO {
@@ -171,7 +170,6 @@ class PartyFinderService(
         recruitmentPostRepository.saveAndFlush(post)
 
         // Notify
-        //publishLatestPost(post.toDTO())
         redisPublisher.broadcast(BroadcastMessage.updateRecruitmentPost(post.toDTO()))
         return post.toDTO()
     }
@@ -267,9 +265,7 @@ class PartyFinderService(
                     .setPriority(AndroidConfig.Priority.HIGH)
                     .setNotification(
                         AndroidNotification.builder()
-                            //.setTitle("Party Finder")
                             .setTitleLocalizationKey("partyFinder")
-                            //.setBody("${post.title} - You got in!")
                             .setBodyLocalizationKey("recruitEntryAccepted")
                             .addBodyLocalizationArg(post.title)
                             .build()
@@ -287,7 +283,6 @@ class PartyFinderService(
                     ).build()
             ).build()
         FirebaseMessaging.getInstance().sendEachForMulticast(fcmMessage)
-        //publishLatestPost(applicant.post.toDTO())
         redisPublisher.broadcast(
             listOf(
                 BroadcastMessage.updateApplicantStatus(
@@ -337,9 +332,7 @@ class PartyFinderService(
                     .setPriority(AndroidConfig.Priority.HIGH)
                     .setNotification(
                         AndroidNotification.builder()
-                            //.setTitle("PartyFinder")
                             .setTitleLocalizationKey("partyFinder")
-                            //.setBody("${post.title} - Maybe next time!")
                             .setBodyLocalizationKey("recruitEntryRejected")
                             .addBodyLocalizationArg(post.title)
                             .build()
@@ -382,20 +375,6 @@ class PartyFinderService(
         )
         return applicant.toDTO()
     }
-
-    /*private fun publishLatestPost(post: RecruitmentPostDTO) {
-        synchronizationDataRepository.broadcast(
-            listOf(
-                BroadcastMessage(
-                    destinations = mutableListOf(
-                        "/live-data/adventurer-hub/${post.region}/post",
-                        "/live-data/adventurer-hub/post/${post.id}"
-                    ),
-                    message = Json.encodeToString(post.simplify())
-                )
-            )
-        )
-    }*/
 
     private fun generateReservationCode(postId: Long): String {
         val code = RandomCodeUtils().generate(5)
