@@ -1,13 +1,13 @@
 package kr.karanda.karandaserver.entity
 
 import jakarta.persistence.*
-import kr.karanda.karandaserver.dto.CurrentReportsDTO
+import kr.karanda.karandaserver.dto.ReportStatusDTO
 import kr.karanda.karandaserver.enums.BDORegion
 import org.jetbrains.annotations.NotNull
 import java.time.ZonedDateTime
 
-@Entity(name = "current_reports")
-class CurrentReports(
+@Entity(name = "report_status")
+class ReportStatus(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -35,8 +35,8 @@ class CurrentReports(
     @JoinColumn(name = "report_id", nullable = false)
     var sourceReport: Report,
 ) {
-    fun toDTO(): CurrentReportsDTO {
-        return CurrentReportsDTO(
+    fun toDTO(): ReportStatusDTO {
+        return ReportStatusDTO(
             id = id,
             target = target,
             region = region,

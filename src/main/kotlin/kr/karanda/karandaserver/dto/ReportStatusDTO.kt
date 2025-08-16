@@ -3,7 +3,7 @@ package kr.karanda.karandaserver.dto
 import kr.karanda.karandaserver.enums.BDORegion
 import java.time.ZonedDateTime
 
-data class CurrentReportsDTO(
+data class ReportStatusDTO(
     val id: Long?,
     val target: String,
     val region: BDORegion,
