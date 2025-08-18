@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.entity
 import jakarta.persistence.*
 import kr.karanda.karandaserver.dto.ReportDTO
 import kr.karanda.karandaserver.enums.BDORegion
+import kr.karanda.karandaserver.enums.ReportTarget
 import org.jetbrains.annotations.NotNull
 import java.time.ZonedDateTime
 
@@ -11,8 +12,10 @@ class Report(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
+
+    @Enumerated(EnumType.STRING)
     @Column(length = 50, nullable = false)
-    val target: String,
+    val target: ReportTarget,
 
     @Enumerated(EnumType.STRING)
     @Column(length = 10, nullable = false)
@@ -34,6 +37,7 @@ class Report(
     @JoinColumn(name = "reporter_id")
     var reporter: User? = null,
 
+    @NotNull
     var isCanceled: Boolean = false,
 
     @Column(length = 1024)
