@@ -10,7 +10,7 @@ data class ReportStatusDTO(
     val region: BDORegion,
     val channel: String?,
     val active: Boolean,
-    val eventTime: ZonedDateTime,
+    val eventAt: ZonedDateTime,
     val updatedAt: ZonedDateTime,
-    val sourceReport: ReportDTO
+    val sourceReport: ReportDTO?
 )

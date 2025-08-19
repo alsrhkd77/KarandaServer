@@ -42,3 +42,16 @@ fun ZonedDateTime.difference(other: ZonedDateTime): Duration {
     val zoned = other.withZoneSameInstant(this.zone)
     return Duration.between(this.toInstant(), zoned.toInstant())
 }
+
+/**
+ * 현재 객체가 [start]와 [end] 범위내에 있는지 판별.
+ *
+ * @param [start],[end] [ZonedDateTime]
+ * @return [Boolean]
+ */
+fun ZonedDateTime.isBetween(start: ZonedDateTime, end: ZonedDateTime): Boolean {
+    if (start.isAfter(end)) throw IllegalArgumentException()
+    val s = start.withZoneSameInstant(this.zone)
+    val e = end.withZoneSameInstant(this.zone)
+    return this.isAfter(s) && this.isBefore(e)
+}

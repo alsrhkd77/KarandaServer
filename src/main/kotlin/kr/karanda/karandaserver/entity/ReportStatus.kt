@@ -21,21 +21,21 @@ class ReportStatus(
     @Column(length = 10, nullable = false)
     val region: BDORegion,
 
-    @Column(length = 50)
+    @Column(length = 50, nullable = true)
     val channel: String? = null,    // null = 전체 채널
 
     @NotNull
     var active: Boolean, // true = 출현/활성, false = 사망/비활성
 
     @Column(nullable = false)
-    var eventTime: ZonedDateTime,
+    var eventAt: ZonedDateTime,
 
     @Column(nullable = false)
     var updatedAt: ZonedDateTime,
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "report_id", nullable = false)
-    var sourceReport: Report,
+    @JoinColumn(name = "report_id", nullable = true)
+    var sourceReport: Report?,
 ) {
     fun toDTO(): ReportStatusDTO {
         return ReportStatusDTO(
@@ -44,9 +44,9 @@ class ReportStatus(
             region = region,
             channel = channel,
             active = active,
-            eventTime = eventTime,
+            eventAt = eventAt,
             updatedAt = updatedAt,
-            sourceReport = sourceReport.toDTO()
+            sourceReport = sourceReport?.toDTO()
         )
     }
 }
