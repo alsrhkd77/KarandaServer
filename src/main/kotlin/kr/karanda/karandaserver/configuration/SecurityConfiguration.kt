@@ -41,27 +41,14 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
         return source
     }
 
+    /**
+     * Spring Security 7은 securityMatcher 없이 "any request"에 매칭되는 SecurityFilterChain이
+     * 둘 이상이면 기동을 거부한다. (기존 3개 체인 → 단일 체인으로 통합)
+     *
+     * 필터 적용 순서: 기본 설정(cors/csrf/formLogin/session) → qualification → authorization.
+     */
     @Bean
-    fun formLoginFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http {
-            cors {
-                configurationSource = corsConfigurationSource()
-            }
-            csrf {
-                disable()
-            }
-            formLogin {
-                disable()
-            }
-            sessionManagement {
-                sessionCreationPolicy = SessionCreationPolicy.STATELESS
-            }
-        }
-        return http.build()
-    }
-
-    @Bean
-    fun authorizationFilterChain(http: HttpSecurity): SecurityFilterChain {
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
         val whitePathMatcher = object : RequestMatcher {
             override fun matches(request: HttpServletRequest): Boolean {
                 val paths = listOf(
@@ -86,19 +73,26 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
         }
         authorizationFilter.setWhitePathMatcher(whitePathMatcher)
         http {
+            cors {
+                configurationSource = corsConfigurationSource()
+            }
+            csrf {
+                disable()
+            }
+            formLogin {
+                disable()
+            }
+            sessionManagement {
+                sessionCreationPolicy = SessionCreationPolicy.STATELESS
+            }
             authorizeHttpRequests {
                 authorize(whitePathMatcher, permitAll)
                 authorize(anyRequest, authenticated)
             }
+            // authorizationFilter를 먼저 등록해 순서 기준점으로 삼고,
+            // qualificationFilter를 그 앞에 배치 → 적용 순서: qualification → authorization
             addFilterBefore<UsernamePasswordAuthenticationFilter>(authorizationFilter)
-        }
-        return http.build()
-    }
-
-    @Bean
-    fun qualificationFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http {
-            addFilterBefore<UsernamePasswordAuthenticationFilter>(qualificationFilter)
+            addFilterBefore<AuthorizationFilter>(qualificationFilter)
         }
         return http.build()
     }
