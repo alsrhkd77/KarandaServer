@@ -87,7 +87,7 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
         }
         authorizationFilter.setWhitePathMatcher(whitePathMatcher)
         http {
-            authorizeRequests {
+            authorizeHttpRequests {
                 authorize(whitePathMatcher, permitAll)
                 authorize(anyRequest, authenticated)
             }
