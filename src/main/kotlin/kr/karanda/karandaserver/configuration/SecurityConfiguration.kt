@@ -63,7 +63,7 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
     @Bean
     fun authorizationFilterChain(http: HttpSecurity): SecurityFilterChain {
         val whitePathMatcher = object : RequestMatcher {
-            override fun matches(request: HttpServletRequest?): Boolean {
+            override fun matches(request: HttpServletRequest): Boolean {
                 val paths = listOf(
                     "/docs",
                     "/api-docs",
@@ -77,7 +77,6 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
                     "/party-finder/post",
                     "/party-finder/posts",
                 )
-                if (request == null) return false
                 val matcher = AntPathMatcher()
                 for(path in paths) {
                     if(matcher.match(path, request.requestURI)) return true

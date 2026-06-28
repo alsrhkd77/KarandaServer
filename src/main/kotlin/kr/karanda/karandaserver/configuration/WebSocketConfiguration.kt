@@ -42,7 +42,7 @@ class WebSocketConfiguration : WebSocketMessageBrokerConfigurer {
     }
 
     override fun configureClientInboundChannel(registration: ChannelRegistration) {
-        registration.interceptors(inBoundInterceptor)
+        registration.interceptors(inBoundInterceptor!!)
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {

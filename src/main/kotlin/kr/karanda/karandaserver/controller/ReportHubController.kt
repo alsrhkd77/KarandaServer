@@ -28,14 +28,14 @@ class ReportHubController(
     @PostMapping("/report")
     @Operation(summary = "Create new Report")
     fun addReport(@RequestBody param: ReportDTO): ReportDTO {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         return reportHubService.addReport(authentication.userUUID, param)
     }
 
     @PatchMapping("/cancel")
     @Operation(summary = "Canceling previous report. Not deleting it.")
     fun cancelReport(@RequestParam(required = true) reportId: Long, @RequestParam reason: String = ""): ReportDTO {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         return reportHubService.cancelReport(authentication.userUUID, reportId, reason)
     }
 }

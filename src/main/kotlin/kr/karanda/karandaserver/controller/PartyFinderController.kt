@@ -21,7 +21,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @PostMapping("post/create")
     @Operation(summary = "Create new recruitment post")
     fun createNewPost(@RequestBody data: RecruitmentPost): ResponseEntity<RecruitmentPost> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         if (data.title.isEmpty() || data.title.length > 60) {
             throw BadRequestException("bad title")
         } else if (data.category == "guildWarHeroes") {
@@ -47,7 +47,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @PatchMapping("post/update")
     @Operation(summary = "Update recruitment post")
     fun updatePost(@RequestBody data: RecruitmentPost): ResponseEntity<RecruitmentPost> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.updatePost(uuid = authentication.userUUID, data = data)
         return ResponseEntity.ok(result)
     }
@@ -67,14 +67,14 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @GetMapping("/post/detail")
     @Operation(summary = "Get recruitment post's detail")
     fun getDetail(@RequestParam(required = true) postId: Long): RecruitmentPost {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         return partyFinderService.getPost(postId = postId, uuid = authentication.userUUID)
     }
 
     @PostMapping("/post/open")
     @Operation(summary = "Start recruiting for this post")
     fun openPost(@RequestParam(required = true) postId: Long): ResponseEntity<RecruitmentPost> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.openPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -82,7 +82,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @PostMapping("/post/close")
     @Operation(summary = "Recruiting for this post is closed")
     fun closePost(@RequestParam(required = true) postId: Long): ResponseEntity<RecruitmentPost> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.closePost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -90,7 +90,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @PostMapping("/post/join")
     @Operation(summary = "Apply to this post")
     fun joinToPost(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.joinToPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -98,7 +98,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @PostMapping("/post/cancel")
     @Operation(summary = "Cancel to this post")
     fun cancelToPost(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.cancelToPost(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -109,7 +109,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
         @RequestParam(required = true) postId: Long,
         @RequestParam(required = true) applicantId: String
     ): ResponseEntity<Applicant> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.acceptApplicant(
             postId = postId,
             applicantId = applicantId,
@@ -124,7 +124,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
         @RequestParam(required = true) postId: Long,
         @RequestParam(required = true) applicantId: String,
     ): ResponseEntity<Applicant> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.rejectApplicant(
             postId = postId,
             applicantId = applicantId,
@@ -135,16 +135,16 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
 
     @GetMapping("/post/applicant")
     @Operation(summary = "Get single applicant")
-    fun getPostApplicant(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant?> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+    fun getPostApplicant(@RequestParam(required = true) postId: Long): ResponseEntity<Applicant> {
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.getPostApplicant(postId = postId, uuid = authentication.userUUID)
-        return ResponseEntity.ok(result)
+        return if (result != null) ResponseEntity.ok(result) else ResponseEntity.ok().build()
     }
 
     @GetMapping("/post/applicants")
     @Operation(summary = "Get applicants list")
     fun getPostApplicants(@RequestParam(required = true) postId: Long): ResponseEntity<List<Applicant>> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.getPostApplicants(postId = postId, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -152,7 +152,7 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
     @GetMapping("/user/joined")
     @Operation(summary = "Get list of user joined")
     fun fetchUserJoined(): ResponseEntity<List<Applicant>> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = partyFinderService.fetchUserJoined(uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }

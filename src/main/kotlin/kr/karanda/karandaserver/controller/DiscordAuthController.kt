@@ -56,14 +56,14 @@ class DiscordAuthController(
     @GetMapping("/authorization")
     @Operation(summary = "Authorization with access token")
     fun authorization(): UserDTO {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         return authService.authorization(authentication.userUUID)
     }
 
     @GetMapping("/refresh")
     @Operation(summary = "Exchanging old tokens for new tokens")
     fun refreshAccessToken(@RequestHeader headers: Map<String, String>): RefreshTokenResponse {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val tokens = authService.createTokens(userUUID = authentication.userUUID)
         val user = authService.authorization(authentication.userUUID)
         return RefreshTokenResponse(user = user, tokens = tokens)
@@ -73,7 +73,7 @@ class DiscordAuthController(
 
     @DeleteMapping("/unregister")
     fun unregister(): ResponseEntity<Any> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         authService.unregister(authentication.userUUID)
         return ResponseEntity(HttpStatus.OK)
     }

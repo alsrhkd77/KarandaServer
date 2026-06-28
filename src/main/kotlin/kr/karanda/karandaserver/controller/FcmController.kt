@@ -24,7 +24,7 @@ class FcmController(private val fcmService: FcmService) {
     @GetMapping("/settings")
     @Operation(summary = "Get user's fcm settings")
     fun getFcmSettings(@RequestParam(required = true) token: String): ResponseEntity<Any> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = fcmService.getUserFcmSettings(token = token, uuid = authentication.userUUID)
         return if (result == null) {
             ResponseEntity.status(HttpStatus.NO_CONTENT).build()
@@ -36,7 +36,7 @@ class FcmController(private val fcmService: FcmService) {
     @PostMapping("/settings/save")
     @Operation(summary = "Create & Update user's fcm settings")
     fun saveFcmSettings(@RequestBody data: UserFcmSettingsDTO): ResponseEntity<UserFcmSettingsDTO> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = fcmService.saveUserFcmSettings(userFcmSettings = data, uuid = authentication.userUUID)
         return ResponseEntity.ok(result)
     }
@@ -44,7 +44,7 @@ class FcmController(private val fcmService: FcmService) {
     @DeleteMapping("/token/delete")
     @Operation(summary = "Delete user's fcm token")
     fun deleteFcmToken(@RequestParam(required = true) token: String): ResponseEntity<HttpStatus> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         fcmService.unregisterFcmToken(token = token, uuid = authentication.userUUID)
         return ResponseEntity.status(HttpStatus.OK).build()
     }
@@ -55,7 +55,7 @@ class FcmController(private val fcmService: FcmService) {
         @RequestParam(required = true) oldToken: String,
         @RequestParam(required = true) newToken: String
     ): ResponseEntity<HttpStatus> {
-        val authentication = SecurityContextHolder.getContext().authentication.principal as TokenClaims
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         fcmService.updateFcmToken(oldToken = oldToken, newToken = newToken, uuid = authentication.userUUID)
         return ResponseEntity.status(HttpStatus.OK).build()
     }
