@@ -18,9 +18,9 @@ interface ReportRepository : JpaRepository<Report, Long> {
         channel: String?
     ): Report?
 
-    fun findTop1ByTargetAndRegionAndIsCanceldFalseOrderByEventAtDesc(target: ReportTarget, region: BDORegion): Report?
+    fun findTop1ByTargetAndRegionAndIsCanceledFalseOrderByEventAtDesc(target: ReportTarget, region: BDORegion): Report?
 
-    fun findTop1ByTargetAndRegionAndActiveAndEventAtBetweenAndIsCanceldFalseOrderByEventAtAsc(
+    fun findTop1ByTargetAndRegionAndActiveAndEventAtBetweenAndIsCanceledFalseOrderByEventAtAsc(
         target: ReportTarget,
         region: BDORegion,
         active: Boolean,

@@ -171,8 +171,8 @@ class ReportHubService(
 
     private fun findLatestReportWithinOneHour(target: ReportTarget, region: BDORegion): Report? {
         val latest =
-            reportRepository.findTop1ByTargetAndRegionAndIsCanceldFalseOrderByEventAtDesc(target, region) ?: return null
-        return reportRepository.findTop1ByTargetAndRegionAndActiveAndEventAtBetweenAndIsCanceldFalseOrderByEventAtAsc(
+            reportRepository.findTop1ByTargetAndRegionAndIsCanceledFalseOrderByEventAtDesc(target, region) ?: return null
+        return reportRepository.findTop1ByTargetAndRegionAndActiveAndEventAtBetweenAndIsCanceledFalseOrderByEventAtAsc(
             target = target,
             region = region,
             active = latest.active,
