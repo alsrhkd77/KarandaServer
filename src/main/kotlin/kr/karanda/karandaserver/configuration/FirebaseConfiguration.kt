@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import java.io.File
 import java.io.FileInputStream
-import javax.annotation.PostConstruct
+import jakarta.annotation.PostConstruct
 
 @Profile("develop")
 @Configuration("FirebaseConfiguration")
