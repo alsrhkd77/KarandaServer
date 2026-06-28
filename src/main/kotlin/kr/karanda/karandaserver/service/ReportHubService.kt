@@ -22,7 +22,7 @@ class ReportHubService(
     private val reportRepository: ReportRepository,
     private val reportStatusRepository: ReportStatusRepository,
 ) {
-    private val independent = listOf(
+    private val independent = listOf(   // 각 채널별 독립 상태를 가지는 것들
         ReportTarget.SUN,
         ReportTarget.MOON,
         ReportTarget.EARTH,
