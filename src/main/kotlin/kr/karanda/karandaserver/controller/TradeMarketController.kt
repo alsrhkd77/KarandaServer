@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import kr.karanda.karandaserver.dto.MarketItem
+import kr.karanda.karandaserver.dto.MarketItemDetail
 import kr.karanda.karandaserver.dto.MarketWaitItem
 import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.service.TradeMarketService
@@ -51,7 +52,7 @@ class TradeMarketController(val tradeMarketService: TradeMarketService) {
     fun getDetail(
         @RequestParam(name = "code", required = true) itemCode: Int,
         @RequestParam(name = "region", required = true) region: String
-    ): List<MarketItem> {
+    ): List<MarketItemDetail> {
         return tradeMarketService.getPriceDetail(
             itemNum = itemCode,
             region = BDORegion.valueOf(region.uppercase(Locale.getDefault()))

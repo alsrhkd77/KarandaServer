@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.configuration
 import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.filter.AuthorizationFilter
 import kr.karanda.karandaserver.filter.QualificationFilter
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -19,7 +20,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qualificationFilter: QualificationFilter) {
+class SecurityConfiguration(
+    val authorizationFilter: AuthorizationFilter,
+    val qualificationFilterProvider: ObjectProvider<QualificationFilter>
+) {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
@@ -46,6 +50,8 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
      * 둘 이상이면 기동을 거부한다. (기존 3개 체인 → 단일 체인으로 통합)
      *
      * 필터 적용 순서: 기본 설정(cors/csrf/formLogin/session) → qualification → authorization.
+     * qualificationFilter는 @Profile("production")이라 develop 등에서는 빈이 존재하지 않으므로
+     * ObjectProvider로 조회해 있을 때만 체인에 추가한다.
      */
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
@@ -63,6 +69,7 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
                     "/trade-market/**",
                     "/party-finder/post",
                     "/party-finder/posts",
+                    "/bdo-news/**",  // 사용자 로그인 불필요 (Qualification은 QualificationFilter가 검증, notify는 Webhook 전용 인증)
                 )
                 val matcher = AntPathMatcher()
                 for(path in paths) {
@@ -92,7 +99,9 @@ class SecurityConfiguration(val authorizationFilter: AuthorizationFilter, val qu
             // authorizationFilter를 먼저 등록해 순서 기준점으로 삼고,
             // qualificationFilter를 그 앞에 배치 → 적용 순서: qualification → authorization
             addFilterBefore<UsernamePasswordAuthenticationFilter>(authorizationFilter)
-            addFilterBefore<AuthorizationFilter>(qualificationFilter)
+            qualificationFilterProvider.ifAvailable { qualificationFilter ->
+                addFilterBefore<AuthorizationFilter>(qualificationFilter)
+            }
         }
         return http.build()
     }

@@ -2,6 +2,7 @@ package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import kr.karanda.karandaserver.dto.BdoNewsNotificationSettingsRequest
 import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.dto.UserFcmSettingsDTO
 import kr.karanda.karandaserver.service.FcmService
@@ -38,6 +39,19 @@ class FcmController(private val fcmService: FcmService) {
     fun saveFcmSettings(@RequestBody data: UserFcmSettingsDTO): ResponseEntity<UserFcmSettingsDTO> {
         val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val result = fcmService.saveUserFcmSettings(userFcmSettings = data, uuid = authentication.userUUID)
+        return ResponseEntity.ok(result)
+    }
+
+    @PatchMapping("/settings/news")
+    @Operation(summary = "Update user's news notification settings (Web only)")
+    fun updateNewsSettings(@RequestBody data: BdoNewsNotificationSettingsRequest): ResponseEntity<UserFcmSettingsDTO> {
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
+        val result = fcmService.updateNewsSettings(
+            token = data.token,
+            uuid = authentication.userUUID,
+            newsNotify = data.newsNotify,
+            newsCategories = data.newsCategories,
+        )
         return ResponseEntity.ok(result)
     }
 

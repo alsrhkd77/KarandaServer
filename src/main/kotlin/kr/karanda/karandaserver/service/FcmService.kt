@@ -2,6 +2,7 @@ package kr.karanda.karandaserver.service
 
 import kr.karanda.karandaserver.dto.UserFcmSettingsDTO
 import kr.karanda.karandaserver.entity.UserFcmSettings
+import kr.karanda.karandaserver.enums.BdoNewsCategory
 import kr.karanda.karandaserver.exception.InvalidArgumentException
 import kr.karanda.karandaserver.exception.UnknownUserException
 import kr.karanda.karandaserver.repository.jpa.UserFcmSettingsRepository
@@ -33,6 +34,26 @@ class FcmService(
             lastUpdated = ZonedDateTime.now(ZoneId.of("UTC")),
             owner = userRepository.findByUserUUID(uuid) ?: throw UnknownUserException()
         )
+        return userFcmSettingsRepository.save(value).toDTO()
+    }
+
+    /**
+     * 뉴스 알림 설정 갱신 (Web 전용).
+     *
+     * 기존 [saveUserFcmSettings]는 뉴스 설정 필드를 갱신하지 않으므로
+     * (구버전 클라이언트의 save 호출이 뉴스 설정을 초기화하지 않도록) 별도 메서드로 분리한다.
+     */
+    fun updateNewsSettings(
+        token: String,
+        uuid: String,
+        newsNotify: Boolean,
+        newsCategories: List<BdoNewsCategory>,
+    ): UserFcmSettingsDTO {
+        val value = userFcmSettingsRepository.findByTokenAndOwner_UserUUID(token, uuid)
+            ?: throw InvalidArgumentException()
+        value.newsNotify = newsNotify
+        value.newsCategories = newsCategories.joinToString(",") { it.name }
+        value.lastUpdated = ZonedDateTime.now(ZoneId.of("UTC"))
         return userFcmSettingsRepository.save(value).toDTO()
     }
 

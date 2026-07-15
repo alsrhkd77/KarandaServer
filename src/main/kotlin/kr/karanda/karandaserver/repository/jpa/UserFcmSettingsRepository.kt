@@ -7,4 +7,5 @@ interface UserFcmSettingsRepository: JpaRepository<UserFcmSettings, Long> {
     fun findByTokenAndOwner_UserUUID(token: String, uuid: String): UserFcmSettings?
     fun findAllByOwner_UserUUID(uuid: String): List<UserFcmSettings>
     fun findAllByRegionAndPartyFinderIsTrue(region: String): List<UserFcmSettings>
+    fun findAllByNewsNotifyIsTrue(): List<UserFcmSettings>
 }

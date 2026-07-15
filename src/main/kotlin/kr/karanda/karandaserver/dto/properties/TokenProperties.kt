@@ -7,4 +7,5 @@ data class TokenProperties(
     var platformKey: String = "",
     var secretKey: String = "",
     var refreshKey: String = "",
+    var utilKey: String = "",
 )

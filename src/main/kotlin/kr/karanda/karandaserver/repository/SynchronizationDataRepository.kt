@@ -11,20 +11,6 @@ class SynchronizationDataRepository(
     private val firestore: Firestore,
     private val environment: Environment,
 ) {
-    fun getTradeMarketLastUpdated(): Int {
-        val document = collection().document("trade-market").get().get()
-        if (document.exists()) {
-            return document.toObject(TradeMarket::class.java)?.lastUpdatedItem?.toInt()
-                ?: throw Exception("Firestore data does invalid! (trade-market)")
-        } else {
-            throw Exception("Firestore data does not exist! (trade-market)")
-        }
-    }
-
-    fun setTradeMarketLastUpdated(itemNum: Int) {
-        collection().document("trade-market").update("lastUpdatedItem", itemNum.toString())
-    }
-
     fun getTradeMarketPriceLastUpdated(): Int {
         val document = collection().document("trade-market").get().get()
         if (document.exists()) {

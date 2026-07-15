@@ -61,6 +61,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     implementation("com.google.firebase:firebase-admin:9.9.0")
+    // firebase-admin이 transitive로 해석하는 버전과 동일하게 핀 고정(버전 드리프트 방지).
+    implementation("com.google.cloud:google-cloud-storage:2.64.0")
 
     implementation("org.jsoup:jsoup:1.18.1")
 

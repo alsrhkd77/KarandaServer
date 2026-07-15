@@ -1,6 +1,6 @@
 package kr.karanda.karandaserver
 
-import kr.karanda.karandaserver.repository.jpa.MarketDataRepository
+import kr.karanda.karandaserver.repository.jpa.MarketPriceDataRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.Test
@@ -8,10 +8,10 @@ import kotlin.test.Test
 @SpringBootTest
 class TradeMarketTests {
     @Autowired
-    var marketDataRepository : MarketDataRepository? = null
+    var marketPriceDataRepository: MarketPriceDataRepository? = null
 
     @Test
-    fun `test apis`(){
+    fun `test apis`() {
         println(":")
     }
 }

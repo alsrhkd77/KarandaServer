@@ -4,12 +4,14 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import kr.karanda.karandaserver.util.TokenUtils
+import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Component
 import org.springframework.util.AntPathMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
+@Profile("production")
 class QualificationFilter(private val tokenUtils: TokenUtils) : OncePerRequestFilter() {
 
     val whiteList = listOf(
@@ -18,7 +20,8 @@ class QualificationFilter(private val tokenUtils: TokenUtils) : OncePerRequestFi
         "/api-docs/*",
         "/swagger-ui/*",
         "/auth/discord/authenticate/*",
-        "/live-channel"
+        "/live-channel",
+        "/bdo-news/notify"  // 크롤러 Webhook — BdoNewsWebhookAuthFilter가 별도 인증
     )
 
     override fun doFilterInternal(

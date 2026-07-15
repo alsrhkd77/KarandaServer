@@ -1,6 +1,7 @@
 package kr.karanda.karandaserver.util
 
 import kr.karanda.karandaserver.dto.BDOAdventurerProfile
+import kr.karanda.karandaserver.dto.ParsedItem
 import kr.karanda.karandaserver.enums.BDORegion
 import kr.karanda.karandaserver.exception.ExternalApiException
 import org.jsoup.Jsoup
@@ -107,5 +108,26 @@ class WebUtils {
         } else {
             throw Exception("Item name is not the same!")
         }
+    }
+
+    /**
+     * 아이템 상세페이지에서 한글명·영문명·등급을 파싱한다.
+     *
+     * 신규 아이템은 한글명 자체를 페이지에서 얻어야 하므로 [getItemName]의 이름 일치 검증을 쓰지 않는다.
+     * 등급은 `div.item_title`의 `item_grade_N` 클래스에서 N을 추출한다.
+     * 하나라도 파싱에 실패하면 예외를 던진다(추측 금지 — 호출부에서 로그 후 재시도).
+     */
+    fun getItemMetadata(url: String): ParsedItem {
+        val doc: Document = Jsoup.connect(url).get()
+        val titleElement = doc.selectFirst("div.item_title") ?: throw Exception("Failed to parse item title")
+        val nameKr = titleElement.selectFirst("b")?.text()?.trim() ?: throw Exception("Failed to parse main title")
+        val nameEn =
+            doc.selectFirst("span.item_sub_title > b")?.text()?.trim() ?: throw Exception("Failed to parse sub title")
+        val grade = titleElement.classNames()
+            .firstOrNull { it.startsWith("item_grade_") }
+            ?.removePrefix("item_grade_")
+            ?.toIntOrNull()
+            ?: throw Exception("Failed to parse item grade")
+        return ParsedItem(nameKr = nameKr, nameEn = nameEn, grade = grade)
     }
 }

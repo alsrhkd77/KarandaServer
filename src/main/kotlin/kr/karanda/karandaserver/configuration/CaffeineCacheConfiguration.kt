@@ -21,8 +21,8 @@ class CaffeineCacheConfiguration {
             "TradeMarketWaitList",
             buildCacheConfig(
                 expire = 29,
-                initialCapacity = BDORegion.entries.size,
-                maximumSize = BDORegion.entries.size.toLong()
+                initialCapacity = BDORegion.tradeMarketRegions.size,
+                maximumSize = BDORegion.tradeMarketRegions.size.toLong()
             )
         )
         return caffeineCacheManager

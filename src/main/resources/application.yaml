@@ -13,6 +13,11 @@ spring:
           max-active: 10
           max-idle: 10
           min-idle: 1
+  servlet:
+    # Set utf-8
+    encoding:
+      charset: utf-8
+      force: true
 
 # Open API Swagger
 springdoc:
@@ -24,13 +29,6 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
-server:
-  servlet:
-    # Set utf-8
-    encoding:
-      charset: utf-8
-      force: true
-
 # Custom Properties (Immutable data)
 karanda:
   adventurer-profile-url-base:
@@ -38,6 +36,10 @@ karanda:
     na: "https://www.naeu.playblackdesert.com/en-US/Adventure/Profile"
     eu: "https://www.naeu.playblackdesert.com/en-US/Adventure/Profile"
     jp: "https://www.jp.playblackdesert.com/ja-JP/Adventure/Profile"
+  item-image:
+    source-url-base: "https://s1.pearlcdn.com/KR/TradeMarket/Common/img/BDO/item/"
+    bucket: "karanda"
+    path-prefix: "bdo/item/image/"
 
 ---
 # Production profile
@@ -59,6 +61,20 @@ spring:
       hibernate:
         jdbc:
           batch_size: 20
+  # Quartz 클러스터링 (Cloud Run 다중 컨테이너 대응)
+  # 스키마는 수동 관리(src/main/resources/quartz/tables_mariadb.sql 1회 실행) → initialize-schema: never
+  quartz:
+    job-store-type: jdbc
+    scheduler-name: karandaScheduler   # 클러스터 노드 간 동일해야 함
+    overwrite-existing-jobs: true       # 배포 시 트리거 스케줄 변경 반영
+    jdbc:
+      initialize-schema: never
+    properties:
+      org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+      org.quartz.jobStore.isClustered: "true"
+      org.quartz.jobStore.clusterCheckinInterval: "20000"
+      org.quartz.jobStore.tablePrefix: QRTZ_
+      org.quartz.scheduler.instanceId: AUTO   # 노드별 고유 ID 자동 부여 (클러스터링 필수)
 server:
   port: 8080
 management:
