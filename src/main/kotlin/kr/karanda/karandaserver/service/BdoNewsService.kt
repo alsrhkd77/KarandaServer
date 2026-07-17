@@ -73,7 +73,12 @@ class BdoNewsService(
      * - UPDATED: 존재하지 않는 `id`면 무시(방어적), 있으면 deadline/updatedAt 갱신
      *
      * 저장/갱신에 성공한 항목만 실시간 알림(STOMP/FCM)을 발행한다.
+     *
+     * 전체를 하나의 트랜잭션으로 묶어 항목별 개별 커밋(N회 DB 왕복)을 피한다.
+     * MariaDB는 트랜잭션 내 개별 statement 실패가 트랜잭션 전체를 무효화하지 않으므로,
+     * 항목별 catch로 스킵하며 계속 진행해도 안전하다(Postgres와 다른 동작).
      */
+    @Transactional
     fun processNotify(request: BdoNewsNotifyRequest): BdoNewsNotifyResponse {
         val processed = mutableListOf<Pair<BdoNewsAction, BdoNewsDTO>>()
         for (item in request.items) {
