@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.service
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kr.karanda.karandaserver.api.TradeMarketApi
+import kr.karanda.karandaserver.dto.MarketBiddingInfo
 import kr.karanda.karandaserver.dto.MarketItem
 import kr.karanda.karandaserver.dto.MarketItemDetail
 import kr.karanda.karandaserver.dto.MarketWaitItem
@@ -62,7 +63,12 @@ class TradeMarketService(
                     )
                 }
             } catch (e: Exception) {
-                logger.info("Fetching a waiting item failed #${region.name}")
+                // 10초 주기로 호출되므로 단발 실패는 흔하다. 연속 실패(=연동 중단) 판정은 GCP 알림 정책의 빈도 임계치가 담당한다.
+                // 스택트레이스는 붙이지 않는다. 매 실패마다 남기면 장애가 길어질수록 로그가 폭증하는데,
+                // 네트워크 호출 실패의 스택은 항상 같고 실제로 달라지는 정보는 예외 타입·메시지뿐이다.
+                logger.warn(
+                    "Trade market wait-list fetch failed #${region.name}: ${e::class.simpleName}: ${e.message}"
+                )
             }
         }
     }
@@ -184,11 +190,11 @@ class TradeMarketService(
                         subKey = latest.enhancementLevel,
                         region = region,
                     ),
-                    buyOrders = tradeMarketApi.getBiddingInfoList(
+                    orderBook = tradeMarketApi.getBiddingInfoList(
                         mainKey = itemNum,
                         subKey = latest.enhancementLevel,
                         region = region,
-                    ).sumOf { it.buyOrders },
+                    ),
                 )
             }, fetchExecutor)
         }
@@ -262,6 +268,7 @@ class TradeMarketService(
                 cumulativeVolume = data.latest.cumulativeVolume
                 priceHistory = data.priceHistory
                 buyOrders = data.buyOrders
+                orderBook = data.orderBook
                 updatedAt = now
                 detailUpdatedAt = now
             } ?: MarketPriceData(
@@ -273,6 +280,7 @@ class TradeMarketService(
                 cumulativeVolume = data.latest.cumulativeVolume,
                 currentStock = data.latest.currentStock,
                 buyOrders = data.buyOrders,
+                orderBook = data.orderBook,
                 updatedAt = now,
                 detailUpdatedAt = now,
             )
@@ -289,5 +297,8 @@ class TradeMarketService(
 private data class MarketDetailRefreshData(
     val latest: MarketItem,
     val priceHistory: List<Long>,
-    val buyOrders: Long,
-)
+    val orderBook: List<MarketBiddingInfo>,
+) {
+    /** 구매 대기 수량은 호가창에서 파생된다. 따로 받아 오지 않는다. */
+    val buyOrders: Long get() = orderBook.sumOf { it.buyOrders }
+}

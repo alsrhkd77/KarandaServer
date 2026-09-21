@@ -8,9 +8,11 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import kr.karanda.karandaserver.dto.MarketBiddingInfo
 import kr.karanda.karandaserver.dto.MarketItem
 import kr.karanda.karandaserver.dto.MarketItemDetail
 import kr.karanda.karandaserver.enums.BDORegion
+import kr.karanda.karandaserver.util.BiddingInfoListJsonConverter
 import kr.karanda.karandaserver.util.LongListJsonConverter
 import java.time.ZonedDateTime
 
@@ -44,6 +46,10 @@ class MarketPriceData(
     var currentStock: Long = 0,
     /** 해당 강화 단계의 구매 대기 수량. 0 = 상세 갱신 전 미수집 또는 실제 0. */
     var buyOrders: Long = 0,
+    /** 가격대별 판매/구매 주문. 상세 갱신 전에는 빈 리스트. */
+    @Convert(converter = BiddingInfoListJsonConverter::class)
+    @Column(columnDefinition = "TEXT")
+    var orderBook: List<MarketBiddingInfo> = emptyList(),
     /** 라이트 필드(basePrice·currentStock·cumulativeVolume) 갱신 시각 (UTC). */
     var updatedAt: ZonedDateTime,
     /** 상세 필드(priceHistory·buyOrders) 갱신 시각 (UTC). null = 상세 미수집. */
@@ -65,6 +71,7 @@ class MarketPriceData(
         cumulativeVolume = cumulativeVolume,
         currentStock = currentStock,
         buyOrders = buyOrders,
+        orderBook = orderBook,
         updatedAt = detailUpdatedAt ?: updatedAt,
     )
 }

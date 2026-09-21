@@ -17,11 +17,13 @@ class ReportHubController(
     private val reportHubService: ReportHubService
 ) {
     @GetMapping("/status")
+    @Operation(summary = "Get report status of every target in the requested region")
     fun getStatus(@RequestParam(required = true) region: BDORegion): List<ReportStatusDTO> {
         return reportHubService.getAllStatus(region = region)
     }
 
     @GetMapping("/reports")
+    @Operation(summary = "Not implemented yet. Always returns an empty body")
     fun getReports() {
     }
 

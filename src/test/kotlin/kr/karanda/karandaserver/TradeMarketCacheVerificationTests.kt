@@ -6,6 +6,7 @@ import kr.karanda.karandaserver.repository.jpa.BDOItemRepository
 import kr.karanda.karandaserver.repository.jpa.MarketPriceDataRepository
 import kr.karanda.karandaserver.service.TradeMarketService
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -24,6 +25,7 @@ import kotlin.test.assertTrue
  * 2. warm 캐시: stale(15분) 이내 재조회 시 갱신 없이 동일 데이터 반환.
  * 3. /latest 라이트 갱신: 상세 필드(priceHistory·buyOrders·detailUpdatedAt)를 건드리지 않음.
  */
+@Tag("external")
 @SpringBootTest
 class TradeMarketCacheVerificationTests {
 

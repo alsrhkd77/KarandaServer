@@ -105,16 +105,33 @@ class TokenUtils(private val defaultDataProvider: DefaultDataProvider) {
             .compact()
     }
 
+    /**
+     * **AccessToken** 검증 후 Spring Security 인증 객체 생성.
+     *
+     * 반드시 [UsernamePasswordAuthenticationToken.authenticated] 팩토리를 사용해야 한다.
+     * `SecurityConfiguration`의 `authorizeHttpRequests { authorize(anyRequest, authenticated) }`가
+     * `Authentication.isAuthenticated()`를 확인하는데, 2-arg 생성자는 내부에서
+     * `setAuthenticated(false)`를 호출하므로 토큰이 유효해도 접근이 거부된다. 이때 인증 객체가
+     * 익명이 아니라서 `ExceptionTranslationFilter`가 entry point(401)가 아니라 AccessDeniedHandler로
+     * 보내 **403**이 나간다. (문서화된 계약은 유효 토큰 → 200, 무효 토큰 → 401)
+     *
+     * 이 프로젝트는 권한(authority) 기반 인가 규칙을 쓰지 않으므로 authorities는 비워 둔다.
+     */
     fun validateAccessToken(token: String): Authentication {
         val payload = validateToken(token, buildSecretKey(tokenProperties.secretKey))
         val tokenClaims = TokenClaims(userUUID = payload.subject, username = payload["username"].toString())
-        return UsernamePasswordAuthenticationToken(tokenClaims, token)
+        return UsernamePasswordAuthenticationToken.authenticated(tokenClaims, token, emptyList())
     }
 
+    /**
+     * **RefreshToken** 검증 후 Spring Security 인증 객체 생성.
+     *
+     * `authenticated` 팩토리를 써야 하는 이유는 [validateAccessToken] 참조.
+     */
     fun validateRefreshToken(token: String): Authentication {
         val payload = validateToken(token, buildSecretKey(tokenProperties.refreshKey))
         val tokenClaims = TokenClaims(userUUID = payload.subject, username = payload["username"].toString())
-        return UsernamePasswordAuthenticationToken(tokenClaims, token)
+        return UsernamePasswordAuthenticationToken.authenticated(tokenClaims, token, emptyList())
     }
 
     fun validateQualificationToken(token: String): Boolean {

@@ -41,7 +41,7 @@ class BdoItemCatalogService(
         val items = try {
             tradeMarketApi.getMarketList(mainCategory = mainCategory, subCategory = subCategory, region = BDORegion.KR)
         } catch (e: Exception) {
-            logger.info("Catalog discovery: getMarketList failed for ($mainCategory, $subCategory).")
+            logger.warn("Catalog discovery: getMarketList failed for ($mainCategory, $subCategory).", e)
             return
         }
 
@@ -106,7 +106,7 @@ class BdoItemCatalogService(
         } catch (e: Exception) {
             // 실패 시 claim 해제 → 다음 실행에서 재시도. 추측으로 값을 채우지 않는다.
             bdoItemRepository.releaseEnrichmentClaim(itemNum)
-            logger.info("Catalog enrich: failed for item #$itemNum, will retry. (${e.message})")
+            logger.warn("Catalog enrich: failed for item #$itemNum, will retry.", e)
         }
     }
 
@@ -126,7 +126,7 @@ class BdoItemCatalogService(
             logger.info("Catalog image: uploaded item #$itemNum.")
         } catch (e: Exception) {
             bdoItemRepository.releaseImageUpload(itemNum)
-            logger.info("Catalog image: upload failed for item #$itemNum, will retry. (${e.message})")
+            logger.warn("Catalog image: upload failed for item #$itemNum, will retry.", e)
         }
     }
 
@@ -135,7 +135,7 @@ class BdoItemCatalogService(
             tradeMarketApi.getSubList(mainKey = itemNum, region = BDORegion.KR)
                 .maxOfOrNull { it.enhancementLevel }
         } catch (e: Exception) {
-            logger.info("Catalog enrich: deriving max enhancement level failed for item #$itemNum.")
+            logger.warn("Catalog enrich: deriving max enhancement level failed for item #$itemNum.", e)
             null
         }
     }

@@ -1,6 +1,9 @@
 package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import kr.karanda.karandaserver.dto.RefreshTokenResponse
@@ -25,8 +28,12 @@ class DiscordAuthController(
     val authService: AuthService,
     val environment: Environment,
 ) {
+    // authenticate 하위 세 경로는 Discord OAuth 리다이렉트 착지점이라 SecurityConfiguration
+    // whitePath와 QualificationFilter whiteList 양쪽에 모두 포함된다. 즉 Authorization·Qualification
+    // 어느 것도 요구하지 않으므로 전역 보안 요구를 해제한다.
     @GetMapping("/authenticate/windows")
     @Operation(summary = "Authentication from Karanda windows client")
+    @SecurityRequirements
     fun authenticationFromWindows(code: String, request: HttpServletRequest): ModelAndView {
         val (accessToken, refreshToken) = authService.authenticate(code, request.requestURL.toString())
         val frontUrl = "http://localhost:8082"
@@ -35,6 +42,7 @@ class DiscordAuthController(
 
     @GetMapping("/authenticate/web")
     @Operation(summary = "Authentication from Karanda web client")
+    @SecurityRequirements
     fun authenticationFromWeb(code: String, request: HttpServletRequest): ModelAndView {
         val (accessToken, refreshToken) = authService.authenticate(code, request.requestURL.toString())
         var frontUrl = "http://localhost:2345"
@@ -47,6 +55,7 @@ class DiscordAuthController(
 
     @GetMapping("/authenticate/android")
     @Operation(summary = "Authentication from Karanda android client")
+    @SecurityRequirements
     fun authenticationFromAndroid(code: String, request: HttpServletRequest): ModelAndView {
         val (accessToken, refreshToken) = authService.authenticate(code, request.requestURL.toString())
         val frontUrl = "karanda://www.karanda.kr" + "/auth/authenticate"
@@ -62,6 +71,12 @@ class DiscordAuthController(
 
     @GetMapping("/refresh")
     @Operation(summary = "Exchanging old tokens for new tokens")
+    @Parameter(
+        name = "Refresh-Token",
+        `in` = ParameterIn.HEADER,
+        required = true,
+        description = "Refresh token. Its user UUID must match the access token's"
+    )
     fun refreshAccessToken(@RequestHeader headers: Map<String, String>): RefreshTokenResponse {
         val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         val tokens = authService.createTokens(userUUID = authentication.userUUID)
@@ -72,6 +87,7 @@ class DiscordAuthController(
     }
 
     @DeleteMapping("/unregister")
+    @Operation(summary = "Withdraw the account and delete the user data")
     fun unregister(): ResponseEntity<Any> {
         val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
         authService.unregister(authentication.userUUID)

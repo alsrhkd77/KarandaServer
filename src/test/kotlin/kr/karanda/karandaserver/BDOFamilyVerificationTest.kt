@@ -1,10 +1,12 @@
 package kr.karanda.karandaserver
 
 import kr.karanda.karandaserver.util.WebUtils
+import org.junit.jupiter.api.Tag
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ContextConfiguration
 import kotlin.test.Test
 
+@Tag("external")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(classes = [KarandaServerApplication::class])
 class BDOFamilyVerificationTest {

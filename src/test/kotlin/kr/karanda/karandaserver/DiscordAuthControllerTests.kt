@@ -7,6 +7,7 @@ import kr.karanda.karandaserver.repository.DefaultDataProvider
 import kr.karanda.karandaserver.repository.jpa.UserRepository
 import kr.karanda.karandaserver.util.TokenUtils
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -21,6 +22,7 @@ import java.util.*
 import javax.crypto.spec.SecretKeySpec
 
 
+@Tag("integration")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(classes = [KarandaServerApplication::class])
 class DiscordAuthControllerTests {

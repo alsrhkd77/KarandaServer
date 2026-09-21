@@ -2,6 +2,7 @@ package kr.karanda.karandaserver
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import kr.karanda.karandaserver.util.TradeMarketBinaryDecoder
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.web.client.RestClient
 import kotlin.test.assertEquals
@@ -51,6 +52,7 @@ import kotlin.test.assertTrue
  * 검증: 12개 카테고리 GetWorldMarketList 615항목 전부를
  * GetWorldMarketSearchList(JSON) 실데이터와 대조해 완전 일치 확인.
  */
+@Tag("external")
 class TradeMarketAPITest {
 
     // kr 리전 거래소 base URL (HTML 문서 기준)

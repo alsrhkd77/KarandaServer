@@ -1,6 +1,7 @@
 package kr.karanda.karandaserver
 
 import kr.karanda.karandaserver.util.SingleFlightExecutor
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -12,6 +13,7 @@ import kotlin.test.assertTrue
 /**
  * [SingleFlightExecutor] 단위 검증 — Spring 컨텍스트 불필요.
  */
+@Tag("unit")
 class SingleFlightExecutorTest {
 
     @Test

@@ -16,6 +16,8 @@ data class MarketItemDetail(
     val currentStock: Long,
     /** 해당 강화 단계의 구매 대기 수량. */
     val buyOrders: Long,
+    /** 가격대별 판매/구매 주문. 가격 내림차순. */
+    val orderBook: List<MarketBiddingInfo> = emptyList(),
     /** 데이터 갱신 시각 (UTC). */
     val updatedAt: ZonedDateTime,
 )

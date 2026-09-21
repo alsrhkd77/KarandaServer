@@ -23,7 +23,12 @@ class SwaggerConfiguration {
 
     @Bean
     fun openApi(): OpenAPI {
-        val securityRequirements = SecurityRequirement().addList("Qualifications", "Authorization")
+        // addList(name, scope)는 "스킴 1개 + 스코프 1개"를 뜻한다. 두 스킴을 모두 요구하려면
+        // addList를 두 번 호출해야 한다. (기존 코드는 Authorization을 Qualifications의 스코프로
+        // 넣어 문서상 Authorization 요구가 누락돼 있었다.)
+        val securityRequirements = SecurityRequirement()
+            .addList("Qualifications")
+            .addList("Authorization")
 
         val qualificationScheme = SecurityScheme()
             .type(SecurityScheme.Type.APIKEY)

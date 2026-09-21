@@ -1,6 +1,7 @@
 package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import kr.karanda.karandaserver.dto.SimplifiedRecruitmentPost
 import kr.karanda.karandaserver.dto.Applicant
@@ -52,14 +53,18 @@ class PartyFinderController(val partyFinderService: PartyFinderService) {
         return ResponseEntity.ok(result)
     }
 
+    // `/party-finder/posts`와 `/party-finder/post`만 SecurityConfiguration whitePath에 포함된다
+    // (로그인 불필요). production에서는 Qualification 헤더가 여전히 필요하다.
     @GetMapping("/posts")
     @Operation(summary = "Get 100 recent recruitment posts. Response is a list of simplified posts")
+    @SecurityRequirement(name = "Qualifications")
     fun getPosts(@RequestParam(name = "region", required = true) region: String): List<SimplifiedRecruitmentPost> {
         return partyFinderService.getPosts(region).map { it.simplify() }
     }
 
     @GetMapping("/post")
     @Operation(summary = "Get recruitment post's information.")
+    @SecurityRequirement(name = "Qualifications")
     fun getPost(@RequestParam(required = true) postId: Long): RecruitmentPost {
         return partyFinderService.getPost(postId = postId)
     }

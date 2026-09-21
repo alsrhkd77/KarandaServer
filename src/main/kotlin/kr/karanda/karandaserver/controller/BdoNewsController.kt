@@ -1,6 +1,7 @@
 package kr.karanda.karandaserver.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import kr.karanda.karandaserver.dto.BdoNewsDTO
 import kr.karanda.karandaserver.dto.BdoNewsHighlightsDTO
@@ -25,6 +26,7 @@ class BdoNewsController(private val bdoNewsService: BdoNewsService) {
 
     @GetMapping
     @Operation(summary = "Get news list (sorted by published date, descending)")
+    @SecurityRequirement(name = "Qualifications")
     fun getNews(
         @RequestParam(name = "region", required = true) region: String,
         @RequestParam(name = "category", required = false) category: String?,
@@ -37,6 +39,7 @@ class BdoNewsController(private val bdoNewsService: BdoNewsService) {
 
     @GetMapping("/highlights")
     @Operation(summary = "Get the latest major update & lab update for the home screen")
+    @SecurityRequirement(name = "Qualifications")
     fun getHighlights(
         @RequestParam(name = "region", required = true) region: String,
     ): BdoNewsHighlightsDTO {
@@ -52,7 +55,12 @@ class BdoNewsController(private val bdoNewsService: BdoNewsService) {
      */
     @Tag(name = "BDO News Webhook", description = "Crawler-only webhook (utilKey bearer auth)")
     @PostMapping("/notify")
-    @Operation(summary = "Receive created/updated news from the crawler")
+    @Operation(
+        summary = "Receive created/updated news from the crawler",
+        description = "Authenticated with the crawler's utilKey as `Authorization: Bearer <utilKey>`. " +
+                "Not a user access token, and no Qualification header is required."
+    )
+    @SecurityRequirement(name = "Authorization")
     fun notify(@RequestBody request: BdoNewsNotifyRequest): BdoNewsNotifyResponse {
         val response = bdoNewsService.processNotify(request)
         // 응답 반환 후 백그라운드에서 보존 기간이 지난 항목 정리 (@Async)

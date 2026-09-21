@@ -28,6 +28,9 @@ springdoc:
     path: /api-docs
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+  # ModelAndView를 반환하는 핸들러(Discord OAuth 리다이렉트 3종)도 문서에 포함한다.
+  # 기본값(false)에서는 /auth/discord/authenticate/* 가 문서에서 통째로 빠진다.
+  model-and-view-allowed: true
 
 # Custom Properties (Immutable data)
 karanda:
