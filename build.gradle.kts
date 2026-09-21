@@ -78,12 +78,15 @@ kotlin {
 }
 
 // 테스트 분류 (@Tag 기준)
-//  - 태그 없음/`unit`: 외부 의존성이 없는 테스트. `test`에서 실행되며 Dockerfile 빌드의 게이트가 된다.
-//  - `integration`: Spring 컨텍스트가 필요해 DB·Redis·Firebase 자격증명을 요구한다. docker build 시점엔 없으므로 제외.
-//  - `external`: 실제 라이브 외부 API(거래소·모험가 프로필)를 호출한다. 외부 사정으로 배포가 막히면 안 되므로 제외.
+//  - 태그 없음/`unit`: 외부 의존성이 없는 테스트. `./gradlew test`
+//  - `integration`: Spring 컨텍스트가 필요해 DB·Redis·Firebase 자격증명을 요구한다. `./gradlew integrationTest`
+//  - `external`: 실제 라이브 외부 API(거래소·모험가 프로필)를 호출한다. `./gradlew externalTest`
 //
-// 제외(include가 아닌 exclude) 방식이라 새로 추가한 테스트는 기본적으로 게이트에 포함된다.
-// 외부 의존성이 있는 테스트를 태그 없이 추가하면 docker build가 즉시 깨지는데, 이는 의도된 실패다(태그를 붙이라는 신호).
+// 배포(docker build)는 테스트를 실행하지 않는다 — Dockerfile이 `--exclude-task test`로 빌드한다.
+// 1인 개발이라 배포 파이프라인에 게이트를 두는 대신, 배포 전 로컬에서 직접 돌려 확인한다(의도된 설정).
+//
+// 제외(include가 아닌 exclude) 방식이라 태그 없이 추가한 테스트는 자동으로 `test`에 포함된다.
+// 외부 의존성이 있는 테스트를 태그 없이 추가하면 `test`가 외부 사정으로 깨지므로 반드시 태그를 붙인다.
 tasks.withType<Test> {
     useJUnitPlatform()
 }
