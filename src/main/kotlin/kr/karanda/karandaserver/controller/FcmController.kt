@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import kr.karanda.karandaserver.dto.BdoNewsNotificationSettingsRequest
+import kr.karanda.karandaserver.dto.ReportHubNotificationSettingsRequest
 import kr.karanda.karandaserver.dto.TokenClaims
 import kr.karanda.karandaserver.dto.UserFcmSettingsDTO
 import kr.karanda.karandaserver.service.FcmService
@@ -51,6 +52,19 @@ class FcmController(private val fcmService: FcmService) {
             uuid = authentication.userUUID,
             newsNotify = data.newsNotify,
             newsCategories = data.newsCategories,
+        )
+        return ResponseEntity.ok(result)
+    }
+
+    @PatchMapping("/settings/report-hub")
+    @Operation(summary = "Update user's Reporter Hub notification settings (Web, Android)")
+    fun updateReportHubSettings(@RequestBody data: ReportHubNotificationSettingsRequest): ResponseEntity<UserFcmSettingsDTO> {
+        val authentication = SecurityContextHolder.getContext().authentication!!.principal as TokenClaims
+        val result = fcmService.updateReportHubSettings(
+            token = data.token,
+            uuid = authentication.userUUID,
+            notify = data.notify,
+            targets = data.targets,
         )
         return ResponseEntity.ok(result)
     }

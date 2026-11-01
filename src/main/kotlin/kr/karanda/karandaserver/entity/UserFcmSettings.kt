@@ -24,6 +24,14 @@ class UserFcmSettings(
     @ColumnDefault("''")
     @Column(length = 60, nullable = false)
     var newsCategories: String = "",
+    /** Reporter Hub 알림 수신 여부 (옵트인, 기본 off). 갱신은 PATCH /fcm/settings/report-hub로만 한다 */
+    @ColumnDefault("false")
+    @Column(nullable = false)
+    var reportHubNotify: Boolean = false,
+    /** Reporter Hub 알림을 받을 대상 코드 CSV (ReportTarget 이름 + "MAINTENANCE") */
+    @ColumnDefault("''")
+    @Column(length = 200, nullable = false)
+    var reportHubTargets: String = "",
     var lastUpdated: ZonedDateTime,
     @ManyToOne
     var owner: User
@@ -36,6 +44,8 @@ class UserFcmSettings(
             fieldBoss = fieldBoss,
             newsNotify = newsNotify,
             newsCategories = newsCategories.split(",").filter { it.isNotBlank() }.mapNotNull { name -> BdoNewsCategory.entries.find { it.name == name } },
+            reportHubNotify = reportHubNotify,
+            reportHubTargets = reportHubTargets.split(",").filter { it.isNotBlank() },
         )
     }
 }

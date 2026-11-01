@@ -13,4 +13,7 @@ data class UserFcmSettingsDTO(
     /** 뉴스 알림 설정 (Web 전용). 기존 save API는 이 필드들을 갱신하지 않는다 — PATCH /fcm/settings/news 사용 */
     var newsNotify: Boolean = false,
     var newsCategories: List<BdoNewsCategory> = emptyList(),
+    /** Reporter Hub 알림 설정. 기존 save API는 이 필드들을 갱신하지 않는다 — PATCH /fcm/settings/report-hub 사용 */
+    var reportHubNotify: Boolean = false,
+    var reportHubTargets: List<String> = emptyList(),
 )

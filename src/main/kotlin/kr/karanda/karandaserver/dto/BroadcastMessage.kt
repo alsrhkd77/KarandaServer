@@ -3,6 +3,7 @@ package kr.karanda.karandaserver.dto
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kr.karanda.karandaserver.enums.BDORegion
 
 @Serializable
 data class BroadcastMessage(
@@ -30,6 +31,18 @@ data class BroadcastMessage(
                     route = "/party-finder/recruit/${post.id}"
                 )
             )
+        )
+
+        /** Reporter Hub 상태 델타. 스냅샷과 같은 형태이며 클라이언트가 행별 version으로 병합한다. */
+        fun reportHubStatus(region: BDORegion, status: ReportHubStatusDTO): BroadcastMessage = BroadcastMessage(
+            destinations = mutableListOf("/live-data/report-hub/${region.name}/status"),
+            message = Json.encodeToString(status)
+        )
+
+        /** Reporter Hub 알림 이벤트(Windows용). 수신 여부는 클라이언트가 팔로우·설정으로 판단한다. */
+        fun reportHubAlert(region: BDORegion, alert: ReportHubAlertDTO): BroadcastMessage = BroadcastMessage(
+            destinations = mutableListOf("/live-data/report-hub/${region.name}/alert"),
+            message = Json.encodeToString(alert)
         )
 
         fun updateApplicantStatus(

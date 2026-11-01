@@ -28,7 +28,8 @@ import org.springframework.stereotype.Service
 class AuthService(
     private val userRepository: UserRepository,
     private val discordApi: DiscordApi,
-    val tokenUtils: TokenUtils
+    val tokenUtils: TokenUtils,
+    private val reportHubRelationService: ReportHubRelationService,
 ) {
     /**
      * 토큰 없이 로그인 시 호출되는 로그인
@@ -111,6 +112,7 @@ class AuthService(
      */
     fun unregister(userUUID: String) {
         val user = userRepository.findByUserUUID(userUUID) ?: throw UnknownUserException()
+        reportHubRelationService.onUserDeleted(user.id!!)
         userRepository.delete(user)
     }
 }

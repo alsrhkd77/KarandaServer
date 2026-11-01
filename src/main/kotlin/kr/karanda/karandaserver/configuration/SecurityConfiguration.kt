@@ -70,6 +70,14 @@ class SecurityConfiguration(
                     "/party-finder/post",
                     "/party-finder/posts",
                     "/bdo-news/**",  // 사용자 로그인 불필요 (Qualification은 QualificationFilter가 검증, notify는 Webhook 전용 인증)
+                    // Reporter Hub 조회 전용 경로만 정확히 나열한다. 이 매처는 HTTP 메서드를 구분하지 않으므로
+                    // 제보(/report)·취소(/cancel)·관계(/relations)가 섞이지 않게 와일드카드를 넓게 쓰지 않는다.
+                    "/report-hub/regions",
+                    "/report-hub/policy",
+                    "/report-hub/status",
+                    "/report-hub/reports",
+                    "/report-hub/reporters",
+                    "/report-hub/reporters/*",
                 )
                 val matcher = AntPathMatcher()
                 for(path in paths) {
